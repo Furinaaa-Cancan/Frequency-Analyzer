@@ -76,8 +76,9 @@ build/
 DAC与滤波器技术分析.md
 GITHUB_GUIDE.md
 
-# Old README (keep only README_GITHUB.md → rename to README.md)
-README.md
+# Old README backup files
+README_old.md
+README_backup.md
 
 # Archive folder
 archive/
