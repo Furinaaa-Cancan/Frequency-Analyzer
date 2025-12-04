@@ -406,16 +406,6 @@ npm run preview
 - [Chart.js](https://www.chartjs.org/) - 强大的图表库
 - [Web Serial API](https://developer.chrome.com/docs/capabilities/serial) - 浏览器串口通信
 
----
-
-## 📬 联系方式
-
-**作者**：leeyoung7017  
-**邮箱**：leeyoung7017@163.com  
-**实验室**：卓越楼 1302 实验室
-
----
-
 <p align="center">
   <sub>用 ❤️ 为嵌入式爱好者打造</sub>
 </p>
