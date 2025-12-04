@@ -1,0 +1,97 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin: 0 0 20px 0;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #fafaf8 0%, #f5f3ef 100%);
+  padding: 32px 28px;
+  text-align: center;
+  border-radius: 16px;
+  border: 1px solid rgba(230, 223, 211, 0.6);
+  box-shadow: 0 4px 16px rgba(74, 63, 53, 0.08), 0 1px 3px rgba(74, 63, 53, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #c9a97a 0%, #b38b5e 100%);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(74, 63, 53, 0.14), 0 2px 6px rgba(74, 63, 53, 0.06);
+  border-color: #c9a97a;
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-value {
+  font-size: 42px;
+  font-weight: 300;
+  color: #3a3128;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+.stat-card:hover .stat-value {
+  color: #c9a97a;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #7a6f5d;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-family: 'Georgia', serif;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .stat-card {
+    padding: 24px 20px;
+  }
+  
+  .stat-value {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
+  }
+}
+
+

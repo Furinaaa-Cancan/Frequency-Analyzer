@@ -1,0 +1,316 @@
+.control-panel {
+  padding: 48px;
+  background: linear-gradient(135deg, #fafaf8 0%, #f5f3ef 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(74, 63, 53, 0.08), 0 1px 3px rgba(74, 63, 53, 0.04);
+  margin-bottom: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(230, 223, 211, 0.6);
+  backdrop-filter: blur(10px);
+}
+
+.control-panel:hover {
+  box-shadow: 0 8px 28px rgba(74, 63, 53, 0.12), 0 2px 6px rgba(74, 63, 53, 0.06);
+  transform: translateY(-2px);
+}
+
+/* 课题标题样式 */
+.control-panel .section-header {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #d9d0c1;
+  padding-bottom: 16px;
+}
+
+.control-panel .section-header h3 {
+  margin: 0 0 8px 0;
+  color: #3a3128;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+.control-panel .section-subtitle {
+  color: #7a6f5d;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+}
+
+.control-row {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(217, 208, 193, 0.3);
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.control-group label {
+  font-weight: 600;
+  color: #4a3f35;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  font-family: 'Georgia', serif;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* 按钮组 */
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.button-group button {
+  flex: 1;
+  min-width: 110px;
+}
+
+/* 输入组 */
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-group input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.input-group button {
+  flex-shrink: 0;
+}
+
+/* 提示信息 */
+.control-hint {
+  padding: 12px 16px;
+  background: rgba(255, 153, 0, 0.08);
+  border-left: 3px solid #ff9500;
+  border-radius: 6px;
+  color: #7a6f5d;
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+button {
+  padding: 12px 20px;
+  border: 1.5px solid #d9d0c1;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: linear-gradient(135deg, #f5f3ef 0%, #edeae3 100%);
+  color: #4a3f35;
+  font-family: 'Georgia', serif;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(74, 63, 53, 0.08), 0 1px 3px rgba(74, 63, 53, 0.04);
+  white-space: nowrap;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(201, 169, 122, 0.15);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+button:hover {
+  background: #e8ebe3;
+  border-color: #c9b89a;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-primary, .btn-success {
+  background: #b38b5e;
+  color: #fefdfb;
+  border-color: #a8845d;
+}
+
+.btn-primary:hover, .btn-success:hover {
+  background: #9d7854;
+  border-color: #8a6b4a;
+  transform: scale(1.02);
+}
+
+.btn-danger {
+  background: rgba(200, 80, 60, 0.12);
+  color: #c8503c;
+  border-color: rgba(200, 80, 60, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(200, 80, 60, 0.18);
+  border-color: rgba(200, 80, 60, 0.4);
+}
+
+.btn-secondary {
+  background: #edf0e8;
+  color: #4a3f35;
+  border-color: #d9d0c1;
+}
+
+.btn-secondary:hover {
+  background: #e8ebe3;
+  border-color: #c9b89a;
+}
+
+button:disabled {
+  background: #f5f2ec;
+  color: #9d8e7a;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  border-color: #e6dfd3;
+}
+
+button:disabled::before {
+  display: none;
+}
+
+button:disabled:hover {
+  transform: none;
+  background: #f5f2ec;
+}
+
+input[type="number"],
+select {
+  padding: 12px 14px;
+  border: 1.5px solid #d9d0c1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fefdfb;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #4a3f35;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+select {
+  width: 100%;
+}
+
+input[type="number"] {
+  width: 100%;
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: #b38b5e;
+  box-shadow: 0 0 0 3px rgba(179, 139, 94, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+input[type="number"]:hover:not(:focus),
+select:hover:not(:focus) {
+  border-color: #c9b89a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%231d1d1f' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .control-panel {
+    padding: 32px 28px;
+  }
+  
+  .control-row {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .control-panel .section-header {
+    margin-bottom: 20px;
+  }
+  
+  .control-group {
+    min-width: 280px;
+  }
+  
+  button {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .control-panel {
+    padding: 24px 20px;
+  }
+  
+  .control-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .control-group {
+    min-width: 100%;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
+  
+  .button-group button,
+  .input-group button {
+    width: 100%;
+  }
+  
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .input-group input {
+    width: 100%;
+  }
+}
+
+

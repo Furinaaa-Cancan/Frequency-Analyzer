@@ -1,0 +1,46 @@
+.connection-banner {
+  background: linear-gradient(135deg, #b38b5e 0%, #9d7854 100%);
+  color: #fefdfb;
+  padding: 14px 40px;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  min-width: 400px;
+  max-width: 600px;
+  margin: 0;
+  z-index: 9998;
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(74, 63, 53, 0.3);
+  border: 1px solid #a8845d;
+  font-family: 'Georgia', serif;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.connection-banner.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(10px);
+  pointer-events: auto;
+}
+
+.banner-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  margin-right: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+

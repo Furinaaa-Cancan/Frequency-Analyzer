@@ -1,0 +1,36 @@
+.parallax {
+  position: relative;
+  overflow: hidden;
+  padding: 5px 0;
+  width: 100%;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.scroller {
+  display: flex;
+  white-space: nowrap;
+  font-family: 'Georgia', serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: #7a6f5d;
+  opacity: 0.45;
+  line-height: 1.5;
+  will-change: transform;
+  transform: translateX(0);
+}
+
+.scroller span {
+  flex-shrink: 0;
+  padding: 0 60px;
+  display: inline-block;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .scroller {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+}

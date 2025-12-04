@@ -1,0 +1,33 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: linear-gradient(180deg, #ede8df 0%, #e8e3d8 100%);
+  min-height: 100vh;
+  padding: 0;
+  color: #4a3f35;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #c9a97a;
+  outline-offset: 2px;
+}
+
+

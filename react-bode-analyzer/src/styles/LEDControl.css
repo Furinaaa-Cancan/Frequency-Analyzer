@@ -1,0 +1,568 @@
+.led-control {
+  background: linear-gradient(135deg, #fafaf8 0%, #f5f3ef 100%);
+  border: 1px solid rgba(230, 223, 211, 0.6);
+  border-radius: 16px;
+  padding: 48px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(74, 63, 53, 0.08), 0 1px 3px rgba(74, 63, 53, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.led-control:hover {
+  box-shadow: 0 8px 28px rgba(74, 63, 53, 0.12), 0 2px 6px rgba(74, 63, 53, 0.06);
+  transform: translateY(-2px);
+}
+
+.led-control .section-header {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #d9d0c1;
+  padding-bottom: 16px;
+}
+
+.led-control .section-header h3 {
+  margin: 0 0 8px 0;
+  color: #3a3128;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+.led-control .section-subtitle {
+  color: #7a6f5d;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+}
+
+/* LED模式按钮 */
+.led-modes {
+  margin-bottom: 24px;
+}
+
+.control-label {
+  display: block;
+  color: #4a3f35;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+.interval-hint {
+  font-size: 11px;
+  color: #9d8e7a;
+  font-weight: 400;
+  margin-left: 8px;
+  font-style: italic;
+}
+
+.mode-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.mode-btn {
+  background: #fefdfb;
+  border: 1px solid #d9d0c1;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a3f35;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Georgia', serif;
+  position: relative;
+  overflow: hidden;
+  min-height: 44px;
+}
+
+.mode-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(201, 169, 122, 0.15);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.mode-btn:not(:disabled):hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.mode-btn:not(:disabled):hover {
+  background: #f5f2ec;
+  border-color: #c9b89a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(74, 63, 53, 0.15);
+}
+
+.mode-btn.active {
+  background: #b38b5e;
+  border-color: #a8845d;
+  color: #fefdfb;
+  box-shadow: 0 4px 16px rgba(179, 139, 94, 0.3);
+  transform: translateY(-2px);
+}
+
+.mode-btn.active::before {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f2ec;
+  color: #9d8e7a;
+}
+
+/* 亮度和间隔控制 */
+.led-control-group {
+  margin-bottom: 24px;
+}
+
+.value-display {
+  color: #b38b5e;
+  font-weight: 600;
+  margin-left: 8px;
+  font-family: 'Georgia', serif;
+}
+
+.slider-container {
+  margin-top: 12px;
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e6dfd3;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-track {
+  background: #e6dfd3;
+  border-radius: 3px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #b38b5e;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(179, 139, 94, 0.3);
+  transition: all 0.2s ease;
+  border: 2px solid #fefdfb;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(179, 139, 94, 0.5);
+  background: #9d7854;
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #b38b5e;
+  cursor: pointer;
+  border: 2px solid #fefdfb;
+  box-shadow: 0 2px 8px rgba(179, 139, 94, 0.3);
+}
+
+.slider::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(179, 139, 94, 0.5);
+  background: #9d7854;
+}
+
+.slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f2ec;
+}
+
+.slider:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+  background: #9d8e7a;
+}
+
+/* 滑块刻度标签 */
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 12px 0;
+  padding: 0 2px;
+  font-size: 11px;
+  color: #7a6f5d;
+  font-family: 'Georgia', serif;
+}
+
+.slider-labels span {
+  text-align: center;
+  min-width: 40px;
+}
+
+.slider-labels span:first-child {
+  text-align: left;
+}
+
+.slider-labels span:last-child {
+  text-align: right;
+}
+
+/* 预设按钮 */
+.preset-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  background: #edf0e8;
+  border: 1px solid #d9d0c1;
+  border-radius: 6px;
+  padding: 6px 14px;
+  color: #4a3f35;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  font-family: 'Georgia', serif;
+}
+
+.preset-btn:not(:disabled):hover {
+  background: #e8ebe3;
+  border-color: #c9b89a;
+  color: #b38b5e;
+  transform: scale(1.05);
+}
+
+.preset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f2ec;
+  color: #9d8e7a;
+}
+
+/* 间隔输入组 */
+.interval-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.interval-input {
+  flex: 1;
+  background: #fefdfb;
+  border: 1px solid #d9d0c1;
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #4a3f35;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+  transition: all 0.2s ease;
+}
+
+.interval-input:focus {
+  outline: none;
+  border-color: #c9a97a;
+  box-shadow: 0 0 0 3px rgba(201, 169, 122, 0.15);
+}
+
+.interval-input:hover {
+  border-color: #c9b89a;
+}
+
+.interval-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f2ec;
+  color: #9d8e7a;
+}
+
+.apply-btn {
+  background: #b38b5e;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  color: #fefdfb;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+.apply-btn:not(:disabled):hover {
+  background: #9d7854;
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(179, 139, 94, 0.3);
+}
+
+.apply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f2ec;
+  color: #9d8e7a;
+}
+
+/* 快捷功能 */
+.led-quick-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.quick-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: 1px solid #d9d0c1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.quick-btn:not(:disabled):hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.alarm-btn {
+  background: #d85d4a;
+  color: #fefdfb;
+  border-color: #c85442;
+}
+
+.alarm-btn:not(:disabled):hover {
+  background: #c24e3d;
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(216, 93, 74, 0.3);
+}
+
+.off-btn {
+  background: #8a7c6b;
+  color: #fefdfb;
+  border-color: #7a6e5f;
+}
+
+.off-btn:not(:disabled):hover {
+  background: #756a5c;
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(138, 124, 107, 0.3);
+}
+
+.quick-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f2ec;
+  color: #9d8e7a;
+}
+
+/* 状态显示 */
+.led-status {
+  background: #fefdfb;
+  border: 1px solid #e6dfd3;
+  border-radius: 8px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-label {
+  color: #7a6f5d;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+.status-value {
+  color: #4a3f35;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+}
+
+/* 警告信息 */
+.led-warning {
+  background: rgba(255, 149, 0, 0.08);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 8px;
+  padding: 14px;
+  color: #b87200;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 16px;
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .mode-buttons {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  
+  .led-quick-actions {
+    flex-direction: column;
+  }
+  
+  .led-status {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* LED选择器 */
+.led-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.led-select-btn {
+  padding: 12px 20px;
+  background: #ffffff;
+  border: 2px solid #d9d0c1;
+  border-radius: 8px;
+  color: #7a6f5d;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  min-width: 80px;
+}
+
+.led-select-btn:hover:not(:disabled) {
+  background: #faf9f7;
+  border-color: #c4b89c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(74, 63, 53, 0.15);
+}
+
+.led-select-btn.active {
+  background: linear-gradient(135deg, #6b8e23 0%, #556b2f 100%);
+  border-color: #556b2f;
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(107, 142, 35, 0.3);
+}
+
+.led-select-btn.active:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7da32a 0%, #5f7a34 100%);
+  box-shadow: 0 4px 16px rgba(107, 142, 35, 0.4);
+}
+
+.led-select-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 增强响应式设计 */
+@media (max-width: 768px) {
+  .led-control {
+    padding: 32px 28px;
+  }
+  
+  .section-header {
+    margin-bottom: 24px;
+  }
+  
+  .led-modes {
+    margin-bottom: 20px;
+  }
+  
+  .mode-buttons {
+    gap: 8px;
+  }
+  
+  .mode-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .led-control {
+    padding: 24px 20px;
+  }
+  
+  .mode-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .mode-btn {
+    width: 100%;
+  }
+  
+  .preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .preset-btn {
+    width: 100%;
+  }
+  
+  .led-selector {
+    gap: 8px;
+  }
+  
+  .led-select-btn {
+    min-width: 60px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}

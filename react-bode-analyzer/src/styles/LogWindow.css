@@ -1,0 +1,104 @@
+.log-container {
+  padding: 48px;
+  background: linear-gradient(135deg, #fafaf8 0%, #f5f3ef 100%);
+  color: #4a3f35;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  border: 1px solid rgba(230, 223, 211, 0.6);
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 0 0 20px 0;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(74, 63, 53, 0.08), 0 1px 3px rgba(74, 63, 53, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.log-container:hover {
+  box-shadow: 0 8px 28px rgba(74, 63, 53, 0.12), 0 2px 6px rgba(74, 63, 53, 0.06);
+  transform: translateY(-2px);
+}
+
+.log-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #f5f3ef;
+  border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #c9b89a;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+  background: #b8a688;
+}
+
+.log-entry {
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  line-height: 1.8;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.log-entry:hover {
+  background: rgba(201, 169, 122, 0.08);
+  transform: translateX(4px);
+}
+
+.log-entry.info {
+  color: #4a3f35;
+  border-left-color: #86868b;
+}
+
+.log-entry.success {
+  color: #2d7a3e;
+  background: rgba(52, 199, 89, 0.08);
+  border-left-color: #34c759;
+}
+
+.log-entry.error {
+  color: #c41e3a;
+  background: rgba(255, 69, 58, 0.08);
+  border-left-color: #ff453a;
+}
+
+.log-entry.warning {
+  color: #b87200;
+  background: rgba(255, 149, 0, 0.08);
+  border-left-color: #ff9500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .log-container {
+    padding: 32px 28px;
+    max-height: 320px;
+    font-size: 12px;
+  }
+  
+  .log-entry {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .log-container {
+    padding: 24px 20px;
+    max-height: 280px;
+    font-size: 11px;
+  }
+  
+  .log-entry {
+    padding: 6px 10px;
+  }
+}
+
+

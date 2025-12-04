@@ -1,0 +1,83 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Keil uVision
+*.uvguix.*
+*.bak
+*.uvoptx
+Listings/
+Objects/
+DebugConfig/
+JLinkLog.txt
+JLinkSettings.ini
+
+# Firmware build artifacts
+firmware/Listings/
+firmware/Objects/
+firmware/.eide/
+firmware/.cmsis/
+firmware/.eide.usr.ctx.json
+firmware/Tamlate.uvguix.*
+
+# Backup files
+*_backup_*/
+firmware_backup_*/
+
+# Temporary files
+*.tmp
+*.log
+.web_pid
+.detected_serial_port
+
+# Node.js / React
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test and debug artifacts
+*.c.test
+*测试*.c
+*调试*.c
+
+# Old assignments (if not needed)
+作业4/
+
+# Documentation build artifacts
+*.pdf.tmp
+
+# Internal development documents (not for public release)
+实时正弦波监视器完成.md
+控制面板排版优化完成.md
+文件移动清单.md
+最终检查报告.md
+老师要求改进完成总结.md
+需求完成度评审报告.md
+项目总结.md
+📚文档导航.md
+DAC与滤波器技术分析.md
+GITHUB_GUIDE.md
+
+# Old README (keep only README_GITHUB.md → rename to README.md)
+README.md
+
+# Archive folder
+archive/

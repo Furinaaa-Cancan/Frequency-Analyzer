@@ -1,0 +1,65 @@
+/* 全局数字字体样式 - 细体等宽数字 */
+body {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 统一所有数字使用细体等宽字体 */
+.stat-value,
+.status-item span,
+.data-value,
+.info-value,
+.chart-title,
+input[type="number"],
+.waveform-info span,
+.stat-values span,
+.progress-text,
+td,
+th {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 
+    'Droid Sans Mono', 'Source Code Pro', 'Courier New', monospace;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.app {
+  min-height: 100vh;
+  position: relative;
+  background: linear-gradient(180deg, #ede8df 0%, #e8e3d8 100%);
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 1440px;
+  background: transparent;
+  overflow: visible;
+  width: 100%;
+  padding: 32px 40px 60px 40px;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    max-width: 100%;
+    padding: 24px 32px 50px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 20px 40px 20px;
+  }
+  
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px 16px 32px 16px;
+  }
+}
+
+
