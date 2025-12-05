@@ -467,7 +467,19 @@ void UART_SendStreamData(uint8_t sample, uint16_t adc0, uint16_t adc1)
     /* 发送符合网页端 WAVEFORM 格式的数据: WAVEFORM:freq,sampleRate,input|output */
     /* ECG模式1000Hz，正弦波500Hz (由 timer.c 中的 stream_divisor 控制) */
     uint16_t sample_rate = (g_signal_type == SIGNAL_TYPE_ECG) ? 1000 : 500;
-    printf("WAVEFORM:%u,%u,%u|%u\r\n", (unsigned int)freq, sample_rate, adc0, adc1);
+    
+    /* ECG模式：直接发送DAC值（滤波器会滤掉非正弦波信号）*/
+    /* 正弦波模式：发送ADC采集值 */
+    if(g_signal_type == SIGNAL_TYPE_ECG)
+    {
+        /* 将8位DAC值(0-255)映射到12位范围(0-4095) */
+        uint16_t ecg_val = ((uint16_t)sample) << 4;
+        printf("WAVEFORM:%u,%u,%u|%u\r\n", (unsigned int)freq, sample_rate, ecg_val, ecg_val);
+    }
+    else
+    {
+        printf("WAVEFORM:%u,%u,%u|%u\r\n", (unsigned int)freq, sample_rate, adc0, adc1);
+    }
 }
 
 void USART0_IRQHandler(void)

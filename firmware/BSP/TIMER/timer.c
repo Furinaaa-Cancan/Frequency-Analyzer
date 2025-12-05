@@ -102,27 +102,23 @@ void TIMER2_IRQHandler(void)
         
         if(g_signal_type == SIGNAL_TYPE_ECG)
         {
-            /* ECG模式：MIT-BIH 100号记录标准心电图 - 高采样率版本
-             * 50kHz中断，每25次更新一个点 -> 2000Hz波形更新率 (医疗级采样)
-             * 360个点播放完毕约0.18秒 -> 心率约333 BPM (需要降低播放速度)
-             * 实际：每139次更新索引 -> 约360Hz索引更新 -> 72BPM心率
+            /* ECG模式：使用和正弦波一样的DDS逻辑
+             * 360点波形表，使用相位累加器控制频率
+             * ECG频率设为100Hz（和正弦波默认频率一样）
+             * phase_increment = freq * 85899 (和DDS一样的计算)
+             * 但ECG表只有360点，需要映射：index = (phase >> 24) * 360 / 256
              */
-            ecg_tick_counter++;
-            if(ecg_tick_counter >= 25)  /* 25次中断更新一个DAC输出 -> 2kHz */
-            {
-                ecg_tick_counter = 0;
-                
-                /* 每5次DAC更新才移动到下一个ECG数据点，控制心率 */
-                static uint16_t ecg_dac_counter = 0;
-                ecg_dac_counter++;
-                if(ecg_dac_counter >= 5)  /* 5 * 2kHz = 400Hz ECG数据更新 */
-                {
-                    ecg_dac_counter = 0;
-                    ecg_index++;
-                    if(ecg_index >= 360) ecg_index = 0;
-                }
-            }
+            static uint32_t ecg_phase_accumulator = 0;
+            uint32_t ecg_phase_increment = 100 * 85899UL;  /* 100Hz */
+            
+            /* 从相位累加器计算ECG表索引 */
+            uint32_t phase_index = (ecg_phase_accumulator >> 24) & 0xFF;  /* 0-255 */
+            ecg_index = (phase_index * 360) >> 8;  /* 映射到0-359 */
+            
             sample = ecg_wave_table[ecg_index];
+            
+            /* 相位累加 */
+            ecg_phase_accumulator += ecg_phase_increment;
         }
         else
         {
