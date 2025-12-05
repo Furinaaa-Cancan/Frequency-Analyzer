@@ -101,11 +101,15 @@ static void process_uart_command(void)
         g_signal_type = SIGNAL_TYPE_SINE;
         printf("OK:TYPE:SINE\r\n");
     }
-    /* TYPE:ECG - 切换到心电ECG模式 */
+    /* TYPE:ECG - 切换到心电ECG模式并启动 */
     else if(str_compare(uart_rx_buffer, "TYPE:ECG", 8) == 0)
     {
         extern SignalType_t g_signal_type;
+        extern void DDS_Start(void);
         g_signal_type = SIGNAL_TYPE_ECG;
+        DDS_Start();  /* 启动DDS输出ECG波形 */
+        uart_stream_enable = 1;  /* 启用数据流 */
+        uart_timestamp = 0;
         printf("OK:TYPE:ECG\r\n");
     }
     /* FREQ_TEST:xxx - 频率测试（Web兼容）*/
