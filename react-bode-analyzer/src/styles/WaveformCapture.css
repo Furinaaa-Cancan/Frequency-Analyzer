@@ -1,0 +1,295 @@
+/* 欠采样波形查看器 - 与ControlPanel统一 */
+.waveform-capture {
+  padding: 48px;
+  background: linear-gradient(135deg, #fafaf8 0%, #f5f3ef 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(74, 63, 53, 0.08), 0 1px 3px rgba(74, 63, 53, 0.04);
+  margin-bottom: 20px;
+  border: 1px solid rgba(230, 223, 211, 0.6);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.waveform-capture:hover {
+  box-shadow: 0 8px 28px rgba(74, 63, 53, 0.12), 0 2px 6px rgba(74, 63, 53, 0.06);
+  transform: translateY(-2px);
+}
+
+/* 标题 - 与ControlPanel统一 */
+.waveform-capture .section-header {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #d9d0c1;
+  padding-bottom: 16px;
+}
+
+.waveform-capture .section-header h3 {
+  margin: 0 0 8px 0;
+  color: #3a3128;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  letter-spacing: 0.3px;
+}
+
+.waveform-capture .section-subtitle {
+  color: #7a6f5d;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+}
+
+/* 控制区域 - 单行布局 */
+.capture-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-item label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a3f35;
+  font-family: 'Georgia', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.85;
+}
+
+/* 带单位的输入框 */
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  background: #fefdfb;
+  border: 1.5px solid #d9d0c1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.input-with-unit input {
+  width: 80px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: 'SF Mono', monospace;
+  color: #3a3128;
+}
+
+.input-with-unit input:focus {
+  outline: none;
+}
+
+.input-with-unit .unit {
+  padding: 8px 10px;
+  background: #edf0e8;
+  color: #7a6f5d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 采样状态显示 */
+.ratio-display {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'SF Mono', monospace;
+  white-space: nowrap;
+}
+
+.ratio-display.ok {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.ratio-display.warning {
+  background: rgba(229, 57, 53, 0.1);
+  color: #e53935;
+}
+
+/* 预设按钮 */
+.control-item.presets {
+  flex: 1;
+  min-width: 200px;
+}
+
+.preset-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.preset-btns button {
+  padding: 8px 12px;
+  border: 1.5px solid #d9d0c1;
+  border-radius: 6px;
+  background: #fefdfb;
+  color: #4a3f35;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-btns button:hover:not(:disabled) {
+  background: #edf0e8;
+  border-color: #b38b5e;
+}
+
+.preset-btns button.warn {
+  background: rgba(200, 80, 60, 0.08);
+  border-color: rgba(200, 80, 60, 0.3);
+  color: #c8503c;
+}
+
+.preset-btns button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 采集按钮 */
+.control-item.action {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.capture-btn {
+  padding: 10px 20px;
+  background: #b38b5e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.capture-btn:hover:not(:disabled) {
+  background: #9d7854;
+  transform: translateY(-1px);
+}
+
+.capture-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.capture-btn.capturing {
+  background: #ff9500;
+  animation: pulse 1s infinite;
+}
+
+.capture-btn.active {
+  background: #e53935;
+  animation: pulse 0.8s infinite;
+}
+
+.capture-btn.active:hover {
+  background: #c62828;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* 波形显示区域 */
+.waveform-display {
+  background: #fefdfb;
+  border: 1px solid #d9d0c1;
+  border-radius: 12px;
+  min-height: 280px;
+  overflow: hidden;
+}
+
+.wave-info {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #edf0e8;
+  border-bottom: 1px solid #d9d0c1;
+  flex-wrap: wrap;
+}
+
+.wave-info span {
+  font-size: 13px;
+  font-family: 'SF Mono', monospace;
+  color: #4a3f35;
+}
+
+.wave-info .alias-freq {
+  color: #e53935;
+  font-weight: 600;
+  background: rgba(229, 57, 53, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.wave-info .frame-count {
+  color: #43a047;
+  font-weight: 600;
+  background: rgba(67, 160, 71, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.wave-chart {
+  height: 400px;
+  padding: 16px;
+}
+
+/* 占位提示 */
+.wave-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 380px;
+  color: #9d8e7a;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+  text-align: center;
+}
+
+.wave-placeholder p {
+  margin: 4px 0;
+}
+
+.wave-placeholder .hint {
+  font-size: 12px;
+  color: #b8a99a;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .waveform-capture {
+    padding: 24px;
+  }
+  
+  .capture-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .control-item.action {
+    margin-left: 0;
+  }
+  
+  .capture-btn {
+    width: 100%;
+  }
+  
+  .wave-info {
+    justify-content: center;
+  }
+}

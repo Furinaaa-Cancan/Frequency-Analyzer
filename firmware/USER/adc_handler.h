@@ -27,4 +27,12 @@ void ExtractADCData(uint16_t *adc0_data, uint16_t *adc1_data, uint32_t count);
  */
 void ProcessADCData(void);
 
+/*!
+ * \brief   欠采样波形采集（独立功能）
+ * \param   signal_freq - 信号频率(Hz)
+ * \param   sample_rate - 采样率(Hz)，可以低于信号频率（欠采样）
+ * \details 用于演示欠采样效果和波形可视化
+ */
+void CaptureWaveform(uint32_t signal_freq, uint32_t sample_rate);
+
 #endif /* __ADC_HANDLER_H */

@@ -17,7 +17,7 @@ function ControlPanel({
 
   const handleFreqChange = (e) => {
     const value = parseInt(e.target.value, 10) || 10
-    setSingleFreq(Math.max(10, Math.min(1000, value)))
+    setSingleFreq(Math.max(10, Math.min(2000, value)))
   }
 
   return (
@@ -74,10 +74,10 @@ function ControlPanel({
                 className="btn-success" 
                 onClick={onSweep}
                 disabled={!isConnected}
-                title="自动扫描10Hz到1000Hz频率范围，测量系统频率响应"
+                title="自动扫描10Hz到2000Hz频率范围，测量系统频率响应"
                 style={{width: '100%'}}
               >
-                开始频率扫描 (10-1000Hz)
+                开始频率扫描 (10-2000Hz)
               </button>
             </div>
             
@@ -87,10 +87,10 @@ function ControlPanel({
                 <input 
                   type="number" 
                   min="10" 
-                  max="1000" 
+                  max="2000" 
                   value={singleFreq}
                   onChange={handleFreqChange}
-                  placeholder="10-1000 Hz"
+                  placeholder="10-2000 Hz"
                   style={{flex: '1'}}
                 />
                 <button 

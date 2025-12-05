@@ -209,3 +209,72 @@ void ProcessADCData(void)
     printf("\r\n");
     printf("\r\n");
 }
+
+/*!
+ * \brief   欠采样波形采集（独立功能）
+ * \param   signal_freq - 信号频率(Hz)
+ * \param   sample_rate - 采样率(Hz)，可以低于信号频率（欠采样）
+ * \details 用于演示欠采样效果和波形可视化
+ */
+void CaptureWaveform(uint32_t signal_freq, uint32_t sample_rate)
+{
+    extern void DDS_SetFrequency(uint32_t freq_hz);
+    extern void DDS_Start(void);
+    extern void TIMER3_SetSampleRate(uint32_t sample_rate_hz);
+    extern void delay_ms(uint32_t ms);
+    
+    static uint16_t capture_ch0[512];  /* PA6 输入信号 */
+    static uint16_t capture_ch1[512];  /* PB1 输出信号 */
+    
+    /* 1. 设置信号频率并启动DDS */
+    DDS_SetFrequency(signal_freq);
+    DDS_Start();
+    
+    /* 2. 设置采样率 */
+    TIMER3_SetSampleRate(sample_rate);
+    
+    /* 3. 等待信号稳定 + DMA缓冲区填满 */
+    /* DMA循环模式下，等待足够时间让512个采样点采集完成 */
+    uint32_t capture_time_ms = (512 * 1000) / sample_rate;  /* 采集512点所需时间 */
+    uint32_t settle_time_ms = 50;  /* 信号稳定时间 */
+    
+    /* 确保等待时间足够：采集时间 + 稳定时间 + 余量 */
+    uint32_t total_wait = settle_time_ms + capture_time_ms + 100;
+    if(total_wait < 200) total_wait = 200;  /* 最少200ms */
+    delay_ms(total_wait);
+    
+    /* 4. 提取数据（DMA已自动填充adc_buffer）*/
+    ExtractADCData(capture_ch0, capture_ch1, 512);
+    
+    /* 5. 计算实际采样时间 */
+    float total_time_ms = (512.0f * 1000.0f) / sample_rate;
+    
+    /* 6. 发送数据 */
+    printf("RAWWAVE:%u,%u,%.2f\r\n", 
+           (unsigned int)signal_freq, 
+           (unsigned int)sample_rate,
+           total_time_ms);
+    
+    /* 发送PA6数据 */
+    printf("CH0:");
+    for(uint32_t i = 0; i < 512; i++)
+    {
+        printf("%u", capture_ch0[i]);
+        if(i < 511) printf(",");
+    }
+    printf("\r\n");
+    
+    /* 发送PB1数据 */
+    printf("CH1:");
+    for(uint32_t i = 0; i < 512; i++)
+    {
+        printf("%u", capture_ch1[i]);
+        if(i < 511) printf(",");
+    }
+    printf("\r\n");
+    
+    printf("OK:CAPTURE_COMPLETE\r\n");
+    
+    /* 7. 恢复默认采样率（10kHz），避免影响后续MEASURE功能 */
+    TIMER3_SetSampleRate(10000);
+}

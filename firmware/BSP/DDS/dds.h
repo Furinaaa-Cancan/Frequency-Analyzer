@@ -1,7 +1,7 @@
 /*!
  * \file     dds.h
  * \brief    DDS频率控制模块头文件
- * \details  直接数字频率合成，支持10Hz-1000Hz频率输出
+ * \details  直接数字频率合成，支持10Hz-2000Hz频率输出
  */
 
 #ifndef _DDS_H_
@@ -10,9 +10,9 @@
 #include <stdint.h>
 
 /* 配置参数 */
-#define DDS_SAMPLE_RATE  50000UL    /* 采样率：50kHz（对1000Hz仍有50倍采样） */
+#define DDS_SAMPLE_RATE  50000UL    /* 采样率：50kHz（对2000Hz仍有25倍采样） */
 #define DDS_MIN_FREQ     10         /* 最小频率：10Hz */
-#define DDS_MAX_FREQ     1000       /* 最大频率：1000Hz */
+#define DDS_MAX_FREQ     2000       /* 最大频率：2000Hz */
 #define DDS_FREQ_STEP    10         /* 频率步进：10Hz */
 
 /* 滤波器配置 */

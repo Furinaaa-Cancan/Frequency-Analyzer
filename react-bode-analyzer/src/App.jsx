@@ -13,6 +13,7 @@ import LogWindow from './components/LogWindow'
 import Toast from './components/Toast'
 import ConnectionBanner from './components/ConnectionBanner'
 import WaveformDisplay from './components/WaveformDisplay'
+import WaveformCapture from './components/WaveformCapture'
 import LiveSineWaveMonitor from './components/LiveSineWaveMonitor'
 import DataVerification from './components/DataVerification'
 import Footer from './components/Footer'
@@ -280,6 +281,12 @@ function App() {
         />
         
         <WaveformDisplay waveformData={waveformData} allWaveforms={allWaveforms} signalType={signalType} />
+        
+        <WaveformCapture
+          isConnected={isConnected}
+          sendCommand={sendCommand}
+          addLog={addLog}
+        />
         
         <LiveSineWaveMonitor 
           isConnected={isConnected} 

@@ -119,3 +119,24 @@ void ADC_DMA_Init(void)
     dma_channel_enable(DMA0, DMA_CH0);
 }
 
+/*!
+ * \brief   重启DMA采集（用于欠采样波形采集）
+ * \param   sample_count - 要采集的样本数量
+ */
+void ADC_DMA_Restart(uint32_t sample_count)
+{
+    /* 禁用DMA通道 */
+    dma_channel_disable(DMA0, DMA_CH0);
+    
+    /* 清除传输完成标志 */
+    dma_flag_clear(DMA0, DMA_CH0, DMA_FLAG_FTF);
+    
+    /* 重新设置传输数量 */
+    if(sample_count > ADC_BUFFER_SIZE) {
+        sample_count = ADC_BUFFER_SIZE;
+    }
+    dma_transfer_number_config(DMA0, DMA_CH0, sample_count);
+    
+    /* 重新使能DMA通道 */
+    dma_channel_enable(DMA0, DMA_CH0);
+}

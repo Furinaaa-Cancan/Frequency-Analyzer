@@ -28,15 +28,15 @@ extern void delay_ms(uint32_t ms);
 extern volatile uint32_t systick_ms;
 
 /*!
- * \brief   自动扫频测量（10Hz ~ 1kHz）
+ * \brief   自动扫频测量（10Hz ~ 2kHz）
  * \details 每隔10Hz测量一次，输出完整的频率响应曲线
  */
 void AutoSweep(void)
 {
     printf("\r\n");
     printf("================================================\r\n");
-    printf("  AUTO FREQUENCY SWEEP: 10Hz - 1000Hz\r\n");
-    printf("  Step: 10Hz, Total: 100 points\r\n");
+    printf("  AUTO FREQUENCY SWEEP: 10Hz - 2000Hz\r\n");
+    printf("  Step: 10Hz, Total: 200 points\r\n");
     printf("  Mode: External Feedback with Adaptive Sampling\r\n");
     printf("  Amplitude Method: RMS Energy (RMS能量法)\r\n");
     printf("  Phase Algorithm: Float DFT + atan2f\r\n");
@@ -46,6 +46,7 @@ void AutoSweep(void)
     printf("    10Hz  → 100Hz采样\r\n");
     printf("    100Hz → 1kHz采样\r\n");
     printf("    1kHz  → 10kHz采样\r\n");
+    printf("    2kHz  → 20kHz采样\r\n");
     printf("================================================\r\n");
     printf("OK:SWEEP_START\r\n");
     printf("================================================\r\n\r\n");
@@ -63,7 +64,7 @@ void AutoSweep(void)
     uint32_t sweep_start_time = systick_ms;
     uint32_t total_measurement_time = 0;
     
-    for(uint32_t freq = 10; freq <= 1000; freq += 10)
+    for(uint32_t freq = 10; freq <= 2000; freq += 10)
     {
         /* 记录本频率点测量开始时间 */
         uint32_t freq_start_time = systick_ms;
@@ -286,8 +287,8 @@ void AutoSweep(void)
     printf("[DEBUG] Loop完成！准备输出结束信息...\r\n");
     printf("================================================\r\n");
     printf("OK:SWEEP_COMPLETE\r\n");
-    printf("  Total Points: 100\r\n");
-    printf("  Frequency Range: 10-1000 Hz\r\n");
+    printf("  Total Points: 200\r\n");
+    printf("  Frequency Range: 10-2000 Hz\r\n");
     printf("  Algorithm: Adaptive DFT Phase Detection\r\n");
     printf("  ⏱️  Total Measurement Time: %.2f seconds\r\n", total_elapsed / 1000.0f);
     printf("  ⏱️  Average Time per Point: %d ms\r\n", total_measurement_time / 100);

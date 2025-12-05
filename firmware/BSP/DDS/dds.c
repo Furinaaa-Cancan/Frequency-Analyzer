@@ -25,7 +25,7 @@ void DDS_Init(void)
 
 /*!
  * \brief   设置输出频率
- * \param   freq_hz 频率（Hz），范围：10-1000Hz
+ * \param   freq_hz 频率（Hz），范围：10-2000Hz
  * \details 计算公式：phase_increment = (freq * 2^32) / sample_rate
  */
 void DDS_SetFrequency(uint32_t freq_hz)

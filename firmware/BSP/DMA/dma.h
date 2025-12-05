@@ -19,5 +19,7 @@ void USART0_DMA_Init(void);
 /* ADC DMA初始化（双ADC同步模式） */
 void ADC_DMA_Init(void);
 
+/* 重启DMA采集（用于欠采样波形采集） */
+void ADC_DMA_Restart(uint32_t sample_count);
 
 #endif

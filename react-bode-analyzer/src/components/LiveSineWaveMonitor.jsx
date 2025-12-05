@@ -11,45 +11,38 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
   const [isMonitoring, setIsMonitoring] = useState(false)
   const [currentFreq, setCurrentFreq] = useState(0)
   const [waveformData, setWaveformData] = useState(null)
-  const [refreshRate, setRefreshRate] = useState(200) // 刷新间隔(ms) - 改为200ms更流畅
+  const [refreshRate, setRefreshRate] = useState(50) // 刷新间隔(ms) - 更快的实时效果
   
   const timerRef = useRef(null)
   const chartRef = useRef(null)
+  const monitoringRef = useRef(false)  // 用于连续模式
   
   // 实时监视：保存接收时间戳
   const lastUpdateTimeRef = useRef(0)
   
-  // 监听最新波形数据（简单模式：直接显示最新数据）
+  // 监听最新波形数据 - 连续模式：收到数据后立即请求下一次
   useEffect(() => {
-    if (isMonitoring && latestWaveform && currentFreq > 0) {
-      // 只更新当前监视频率的波形
-      if (latestWaveform.freq === currentFreq) {
-        const now = Date.now()
-        const timeSinceLastUpdate = now - lastUpdateTimeRef.current
+    if (isMonitoring && latestWaveform && latestWaveform.input && latestWaveform.input.length > 0) {
+      const now = Date.now()
+      const timeSinceLastUpdate = now - lastUpdateTimeRef.current
+      
+      // 确保是新数据（避免重复使用旧数据）
+      if (timeSinceLastUpdate > 5) {
+        // 直接使用最新数据
+        setWaveformData(latestWaveform)
+        lastUpdateTimeRef.current = now
         
-        // 确保是新数据（避免重复使用旧数据）
-        if (timeSinceLastUpdate > 10) {
-          const timeSpan = latestWaveform.timeStamps && latestWaveform.timeStamps.length > 0
-            ? (latestWaveform.timeStamps[latestWaveform.timeStamps.length - 1] - latestWaveform.timeStamps[0]).toFixed(1)
-            : '0'
-          
-          console.log(`[实时监视] 📥 接收新数据:`, {
-            点数: latestWaveform.input.length,
-            频率: latestWaveform.freq + 'Hz',
-            采样率: (latestWaveform.sampleRate / 1000).toFixed(1) + 'kHz',
-            时间跨度: timeSpan + 'ms',
-            距上次更新: timeSinceLastUpdate + 'ms'
-          })
-          
-          // 直接使用最新数据（不累积，避免时间戳混乱）
-          setWaveformData(latestWaveform)
-          lastUpdateTimeRef.current = now
+        // 🚀 连续模式：立即请求下一帧
+        if (monitoringRef.current) {
+          setTimeout(() => {
+            if (monitoringRef.current) {
+              requestWave()
+            }
+          }, refreshRate)
         }
-      } else {
-        console.log(`[实时监视] ⚠️ 频率不匹配: 接收${latestWaveform.freq}Hz, 期望${currentFreq}Hz`)
       }
     }
-  }, [latestWaveform, isMonitoring, currentFreq])
+  }, [latestWaveform, isMonitoring, refreshRate])
 
   // 发送频率设置命令
   const setFrequency = async (freq) => {
@@ -78,22 +71,24 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
     }
   }
 
-  // 请求单次测量
-  const requestMeasure = async () => {
+  // 请求快速波形数据
+  const requestWave = async () => {
     if (!serialPort || !isConnected) return false
     
     try {
-      const command = 'MEASURE\r\n'  // 统一使用\r\n格式
+      const command = 'WAVE\r\n'  // 使用快速WAVE命令
       const writer = serialPort.writable.getWriter()
       await writer.write(new TextEncoder().encode(command))
       writer.releaseLock()
-      console.log('发送命令: MEASURE')
       return true
     } catch (error) {
-      console.error('发送测量命令失败:', error)
+      console.error('发送波形命令失败:', error)
       return false
     }
   }
+  
+  // 兼容旧版本
+  const requestMeasure = requestWave
 
   // 开始监视
   const startMonitoring = async () => {
@@ -111,8 +106,8 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
       return
     }
     
-    if (isNaN(rate) || rate < 50 || rate > 2000) {
-      alert('请输入有效的刷新间隔 (50-2000 ms)')
+    if (isNaN(rate) || rate < 10 || rate > 1000) {
+      alert('请输入有效的刷新间隔 (10-1000 ms)')
       return
     }
 
@@ -130,21 +125,17 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
 
     setCurrentFreq(freq)
     setIsMonitoring(true)
+    monitoringRef.current = true  // 启用连续模式
 
-    // 立即开始定时采样（setFrequency已经等待过了）
-    console.log(`[实时监视] 📊 开始定时采样，频率=${freq}Hz，间隔=${rate}ms`)
-    console.log(`[实时监视] 🔍 状态: isMonitoring=true, currentFreq=${freq}`)
-    requestMeasure()
-    
-    // 设置定时器
-    timerRef.current = setInterval(() => {
-      requestMeasure()
-    }, rate)
+    // 立即开始采样（setFrequency已经等待过了）
+    console.log(`[实时监视] 📊 开始实时采样，频率=${freq}Hz，间隔=${rate}ms`)
+    requestMeasure()  // 首次请求，后续由useEffect连续触发
   }
 
   // 停止监视
   const stopMonitoring = () => {
     console.log(`[实时监视] ⏹️ 停止监视`)
+    monitoringRef.current = false  // 停止连续模式
     setIsMonitoring(false)
     if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -184,7 +175,7 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
     }
   }
 
-  // 刷新率变化
+  // 刷新率变化（连续模式下自动生效）
   const handleRefreshRateChange = (e) => {
     const value = e.target.value
     // 允许空值和数字输入
@@ -195,13 +186,7 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
     const numValue = parseInt(value, 10)
     if (!isNaN(numValue) && numValue >= 0) {
       setRefreshRate(numValue)
-      
-      // 如果正在监视，立即更新定时器
-      if (isMonitoring && timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = setInterval(requestMeasure, numValue)
-        console.log(`[实时监视] ⚡ 刷新率已更新为 ${numValue}ms`)
-      }
+      // 连续模式下，刷新间隔会在下次请求时自动生效
     }
   }
 
@@ -358,13 +343,13 @@ function LiveSineWaveMonitor({ isConnected, serialPort, latestWaveform }) {
           <label>刷新间隔</label>
           <input 
             type="number" 
-            min="50" 
-            max="2000"
-            step="50"
+            min="10" 
+            max="1000"
+            step="10"
             value={refreshRate}
             onChange={handleRefreshRateChange}
             disabled={!isConnected}
-            placeholder="50-2000 ms"
+            placeholder="10-1000 ms"
           />
         </div>
         

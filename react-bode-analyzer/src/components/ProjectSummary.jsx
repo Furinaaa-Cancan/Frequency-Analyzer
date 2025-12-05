@@ -23,7 +23,7 @@ function ProjectSummary() {
             <div className="card-number">01</div>
             <h4>核心功能</h4>
             <ul>
-              <li><strong>自动频率扫描</strong>：10Hz - 1000Hz范围内自动测量</li>
+              <li><strong>自动频率扫描</strong>：10Hz - 2000Hz范围内自动测量</li>
               <li><strong>双通道同步采样</strong>：ADC0/ADC1同步采集输入输出信号</li>
               <li><strong>实时波形显示</strong>：时域波形与频域特性同步呈现</li>
               <li><strong>Bode图绘制</strong>：自动计算并绘制幅频、相频特性曲线</li>
@@ -59,9 +59,9 @@ function ProjectSummary() {
             <div className="card-number">04</div>
             <h4>测量参数</h4>
             <ul>
-              <li><strong>频率范围</strong>：10 Hz - 1000 Hz</li>
+              <li><strong>频率范围</strong>：10 Hz - 2000 Hz（200点）</li>
               <li><strong>采样率</strong>：20000 Hz（可调）</li>
-              <li><strong>采样点数</strong>：1024点/频率点</li>
+              <li><strong>采样点数</strong>：512点/频率点</li>
               <li><strong>幅值精度</strong>：12位 (0-4095)</li>
               <li><strong>相位精度</strong>：0.1° (FFT计算)</li>
             </ul>

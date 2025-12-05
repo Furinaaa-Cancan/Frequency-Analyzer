@@ -74,18 +74,24 @@ static void process_uart_command(void)
     extern void DDS_Start(void);
     extern void DDS_Stop(void);
     
-    /* FREQ:xxx - 设置频率 */
+    /* FREQ:xxx - 设置频率并启动DDS */
     if(str_compare(uart_rx_buffer, "FREQ:", 5) == 0)
     {
         uint32_t freq = str_to_uint(uart_rx_buffer + 5);
-        if(freq >= 0 && freq <= 1000)  /* 允许0Hz作为特殊用途 */
+        if(freq >= 10 && freq <= 2000)
         {
             DDS_SetFrequency(freq);
+            DDS_Start();  /* 自动启动DDS，确保有信号输出 */
+            
+            /* 设置自适应采样率（10倍频率） */
+            extern void TIMER3_SetSampleRate(uint32_t sample_rate_hz);
+            TIMER3_SetSampleRate(freq * 10);
+            
             printf("OK:FREQ:%uHz (DAC5311 -> PB1)\r\n", (unsigned int)freq);
         }
         else
         {
-            printf("ERROR:FREQ_RANGE (10-1000Hz)\r\n");
+            printf("ERROR:FREQ_RANGE (10-2000Hz)\r\n");
         }
     }
     /* TYPE:SINE - 切换到正弦波模式 */
@@ -215,6 +221,72 @@ static void process_uart_command(void)
         printf("OK:MEASURING...\r\n");
         ProcessADCData();
     }
+    /* WAVE - 快速获取原始波形数据（用于实时显示） */
+    else if(str_compare(uart_rx_buffer, "WAVE", 4) == 0)
+    {
+        extern uint32_t adc_buffer[];
+        extern uint32_t DDS_GetFrequency(void);
+        uint32_t freq = DDS_GetFrequency();
+        uint32_t sr = freq * 10;  /* 采样率 */
+        
+        /* 只发送64个点，足够显示几个周期，速度快 */
+        printf("WAVE:%u,%u\r\n", (unsigned int)freq, (unsigned int)sr);
+        printf("D:");
+        for(uint32_t i = 0; i < 64; i++)
+        {
+            uint16_t ch0 = (uint16_t)(adc_buffer[i] & 0xFFFF);
+            uint16_t ch1 = (uint16_t)((adc_buffer[i] >> 16) & 0xFFFF);
+            printf("%u,%u", ch0, ch1);
+            if(i < 63) printf(";");
+        }
+        printf("\r\n");
+    }
+    /* UWAVE:freq,sr - 真实欠采样波形（硬件实际以低采样率采集，双通道） */
+    else if(str_compare(uart_rx_buffer, "UWAVE:", 6) == 0)
+    {
+        extern void DDS_SetFrequency(uint32_t freq_hz);
+        extern void DDS_Start(void);
+        extern void TIMER3_SetSampleRate(uint32_t sample_rate_hz);
+        extern uint32_t adc_buffer[];
+        
+        char *ptr = uart_rx_buffer + 6;
+        uint32_t signal_freq = str_to_uint(ptr);
+        while(*ptr >= '0' && *ptr <= '9') ptr++;
+        if(*ptr == ',') ptr++;
+        uint32_t sample_rate = str_to_uint(ptr);  /* 真实欠采样率 */
+        
+        if(signal_freq >= 10 && signal_freq <= 2000 && sample_rate >= 10 && sample_rate <= 50000)
+        {
+            DDS_SetFrequency(signal_freq);
+            DDS_Start();
+            
+            /* 真实设置欠采样率！ */
+            TIMER3_SetSampleRate(sample_rate);
+            
+            /* 等待信号稳定 + DMA缓冲区刷新（只需要前128点） */
+            uint32_t buffer_fill_ms = (128 * 1000) / sample_rate;  /* 128点足够 */
+            uint32_t settle_time_ms = 30;  /* 信号稳定时间 */
+            uint32_t total_wait = buffer_fill_ms + settle_time_ms;
+            if(total_wait < 50) total_wait = 50;
+            if(total_wait > 500) total_wait = 500;  /* 最长500ms */
+            delay_ms(total_wait);
+            
+            /* 发送64点真实欠采样数据（双通道：PA6和PB1） */
+            printf("UWAVE:%u,%u\r\n", (unsigned int)signal_freq, (unsigned int)sample_rate);
+            printf("D:");
+            for(uint32_t i = 0; i < 64; i++)
+            {
+                uint16_t ch0 = (uint16_t)(adc_buffer[i] & 0xFFFF);         /* PA6 */
+                uint16_t ch1 = (uint16_t)((adc_buffer[i] >> 16) & 0xFFFF); /* PB1 */
+                printf("%u,%u", ch0, ch1);
+                if(i < 63) printf(";");
+            }
+            printf("\r\n");
+            
+            /* 恢复默认采样率 */
+            TIMER3_SetSampleRate(10000);
+        }
+    }
     /* SWEEP - 自动扫频测量 */
     else if(str_compare(uart_rx_buffer, "SWEEP", 5) == 0)
     {
@@ -229,6 +301,34 @@ static void process_uart_command(void)
         extern void AutoCalibration(void);
         printf("OK:STARTING_CALIBRATION\r\n");
         AutoCalibration();
+    }
+    /* CAPTURE:freq,sample_rate - 欠采样波形采集（独立功能） */
+    else if(str_compare(uart_rx_buffer, "CAPTURE:", 8) == 0)
+    {
+        extern void CaptureWaveform(uint32_t signal_freq, uint32_t sample_rate);
+        /* 解析参数：CAPTURE:freq,sample_rate */
+        char *ptr = uart_rx_buffer + 8;
+        uint32_t signal_freq = str_to_uint(ptr);
+        
+        /* 找到逗号 */
+        while(*ptr && *ptr != ',') ptr++;
+        if(*ptr == ',') ptr++;
+        uint32_t sample_rate = str_to_uint(ptr);
+        
+        /* 参数检查 */
+        if(signal_freq >= 10 && signal_freq <= 2000 && 
+           sample_rate >= 10 && sample_rate <= 50000)
+        {
+            printf("OK:CAPTURE_START:freq=%uHz,sr=%uHz\r\n", 
+                   (unsigned int)signal_freq, (unsigned int)sample_rate);
+            CaptureWaveform(signal_freq, sample_rate);
+        }
+        else
+        {
+            printf("ERROR:CAPTURE (freq:10-2000Hz, sample_rate:10-50000Hz)\r\n");
+            printf("Usage: CAPTURE:freq,sample_rate\r\n");
+            printf("Example: CAPTURE:100,500 (100Hz signal, 500Hz sampling)\r\n");
+        }
     }
     /* LED:x - 设置LED模式 */
     else if(str_compare(uart_rx_buffer, "LED:", 4) == 0)
@@ -298,15 +398,18 @@ static void process_uart_command(void)
         printf("  Bode Plot Analyzer Commands\r\n");
         printf("========================================\r\n");
         printf("Frequency Control:\r\n");
-        printf("  FREQ:xxx      - Set frequency (10-1000Hz)\r\n");
+        printf("  FREQ:xxx      - Set frequency (10-2000Hz)\r\n");
         printf("                  Example: FREQ:100\r\n\r\n");
         printf("Output Control:\r\n");
         printf("  START         - Start DDS output\r\n");
         printf("  STOP          - Stop DDS output\r\n\r\n");
         printf("Measurement:\r\n");
         printf("  MEASURE       - Measure H(ω) and θ(ω)\r\n");
-        printf("  SWEEP         - Auto sweep 10Hz-1kHz\r\n");
-        printf("  CALIBRATE     - System calibration (PA6->PB1 direct)\r\n\r\n");
+        printf("  SWEEP         - Auto sweep 10Hz-2kHz (200pts)\r\n");
+        printf("  CALIBRATE     - System calibration\r\n");
+        printf("  CAPTURE:f,sr  - Waveform capture (undersampling demo)\r\n");
+        printf("                  f=signal freq, sr=sample rate\r\n");
+        printf("                  Example: CAPTURE:100,500\r\n\r\n");
         printf("Status:\r\n");
         printf("  STATUS        - Query system status\r\n");
         printf("  DEBUG         - Show debug info\r\n");
@@ -329,7 +432,8 @@ static void process_uart_command(void)
     }
     else
     {
-        printf("Unknown: %s (type HELP for commands)\r\n", uart_rx_buffer);
+        printf("Unknown: %s (len=%d, first=0x%02X) (type HELP for commands)\r\n", 
+               uart_rx_buffer, uart_rx_index, (unsigned char)uart_rx_buffer[0]);
     }
 }
 

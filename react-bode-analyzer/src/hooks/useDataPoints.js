@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 
 const CONFIG = {
   FREQ_MIN: 10,
-  FREQ_MAX: 1000,
+  FREQ_MAX: 2000,
   H_MIN: 0,
   H_MAX: 10,       // 增加到10，容许更大的增益（运放可能有放大）
   THETA_MIN: -200, // 扩大范围，容许相位计算的wrap现象
@@ -36,6 +36,158 @@ export function useDataPoints() {
   })
 
   const addDataPoint = useCallback((data, addLog, signalType = 'sine') => {
+    // 处理真实欠采样波形：UWAVE:freq,sampleRate
+    if (data.includes('UWAVE:')) {
+      try {
+        const idx = data.indexOf('UWAVE:')
+        const parts = data.substring(idx + 6).split(',')
+        window._uwaveTemp = {
+          signalFreq: parseInt(parts[0], 10),
+          sampleRate: parseInt(parts[1], 10)  // 真实欠采样率
+        }
+        console.log('[UWAVE] 真实欠采样:', window._uwaveTemp)
+      } catch (e) {
+        console.error('UWAVE解析错误:', e)
+      }
+      return
+    }
+    
+    // 处理快速波形数据：WAVE:freq,sampleRate（可能有前缀，但排除RAWWAVE和UWAVE）
+    if (data.includes('WAVE:') && !data.includes('RAWWAVE:') && !data.includes('UWAVE:')) {
+      try {
+        const waveIdx = data.indexOf('WAVE:')
+        const waveData = data.substring(waveIdx + 5)
+        const parts = waveData.split(',')
+        window._waveTemp = {
+          freq: parseInt(parts[0], 10),
+          sampleRate: parseInt(parts[1], 10)
+        }
+        console.log('[WAVE] 解析:', window._waveTemp)
+      } catch (e) {
+        console.error('WAVE解析错误:', e)
+      }
+      return
+    }
+    
+    // 处理真实欠采样数据内容：D:ch0,ch1;ch0,ch1;...（双通道）
+    if (data.startsWith('D:') && window._uwaveTemp) {
+      try {
+        const pairs = data.substring(2).split(';')
+        const ch0 = []
+        const ch1 = []
+        pairs.forEach(pair => {
+          const [v0, v1] = pair.split(',').map(v => parseInt(v, 10))
+          if (!isNaN(v0)) ch0.push(v0)
+          if (!isNaN(v1)) ch1.push(v1)
+        })
+        
+        // 触发uwave-data事件（真实欠采样数据，双通道）
+        const event = new CustomEvent('uwave-data', {
+          detail: {
+            signalFreq: window._uwaveTemp.signalFreq,
+            sampleRate: window._uwaveTemp.sampleRate,
+            ch0: ch0,  // PA6
+            ch1: ch1   // PB1
+          }
+        })
+        window.dispatchEvent(event)
+        console.log('[UWAVE] 真实数据: PA6=', ch0.length, '点, PB1=', ch1.length, '点')
+        window._uwaveTemp = null
+      } catch (e) {
+        console.error('UWAVE D:解析错误:', e)
+      }
+      return
+    }
+    
+    // 处理快速波形数据内容：D:ch0,ch1;ch0,ch1;...
+    if (data.startsWith('D:') && window._waveTemp) {
+      try {
+        const pairs = data.substring(2).split(';')
+        const input = []
+        const output = []
+        const timeStamps = []
+        const dt = 1000 / window._waveTemp.sampleRate  // ms per sample
+        
+        pairs.forEach((pair, i) => {
+          const [ch0, ch1] = pair.split(',').map(v => parseInt(v, 10))
+          if (!isNaN(ch0) && !isNaN(ch1)) {
+            input.push(ch0)
+            output.push(ch1)
+            timeStamps.push(i * dt)
+          }
+        })
+        
+        // 触发波形更新事件
+        const waveData = {
+          freq: window._waveTemp.freq,
+          sampleRate: window._waveTemp.sampleRate,
+          input,
+          output,
+          timeStamps
+        }
+        
+        // 更新waveformBuffer用于LiveSineWaveMonitor
+        console.log('[WAVE] 波形数据更新:', waveData.freq + 'Hz', input.length + '点')
+        setWaveformBuffer(waveData)
+        setWaveformData(waveData)
+        
+        window._waveTemp = null
+      } catch (e) {
+        console.error('D:解析错误:', e)
+      }
+      return
+    }
+    
+    // 处理欠采样波形采集数据：RAWWAVE:freq,sampleRate,totalTime
+    // 后续还有 CH0:data 和 CH1:data 行
+    if (data.startsWith('RAWWAVE:')) {
+      try {
+        const parts = data.substring(8).split(',')
+        const signalFreq = parseInt(parts[0], 10)
+        const sampleRate = parseInt(parts[1], 10)
+        const totalTime = parseFloat(parts[2])
+        
+        // 保存到临时存储，等待CH0和CH1数据
+        window._rawwaveTemp = { signalFreq, sampleRate, totalTime, ch0: null, ch1: null }
+        addLog(`[RAWWAVE] 信号${signalFreq}Hz, 采样${sampleRate}Hz, 时长${totalTime}ms`, 'info')
+      } catch (e) {
+        addLog(`RAWWAVE解析错误: ${e.message}`, 'warning')
+      }
+      return
+    }
+    
+    // 处理CH0数据（欠采样波形）
+    if (data.startsWith('CH0:') && window._rawwaveTemp) {
+      try {
+        const dataStr = data.substring(4)
+        window._rawwaveTemp.ch0 = dataStr.split(',').map(v => parseInt(v, 10)).filter(v => !isNaN(v))
+      } catch (e) {
+        addLog(`CH0解析错误: ${e.message}`, 'warning')
+      }
+      return
+    }
+    
+    // 处理CH1数据（欠采样波形）
+    if (data.startsWith('CH1:') && window._rawwaveTemp) {
+      try {
+        const dataStr = data.substring(4)
+        window._rawwaveTemp.ch1 = dataStr.split(',').map(v => parseInt(v, 10)).filter(v => !isNaN(v))
+        
+        // CH0和CH1都收到了，触发事件
+        if (window._rawwaveTemp.ch0 && window._rawwaveTemp.ch1) {
+          const event = new CustomEvent('rawwave-data', {
+            detail: window._rawwaveTemp
+          })
+          window.dispatchEvent(event)
+          addLog(`[RAWWAVE] 数据接收完成: CH0=${window._rawwaveTemp.ch0.length}点, CH1=${window._rawwaveTemp.ch1.length}点`, 'success')
+          window._rawwaveTemp = null
+        }
+      } catch (e) {
+        addLog(`CH1解析错误: ${e.message}`, 'warning')
+      }
+      return
+    }
+    
     // 处理波形数据：WAVEFORM:freq,sampleRate,inputData,outputData
     if (data.startsWith('WAVEFORM:')) {
       try {
@@ -67,30 +219,44 @@ export function useDataPoints() {
           const freqChanged = waveformBuffer.freq !== 0 && waveformBuffer.freq !== freq
           const sampleRateChanged = waveformBuffer.sampleRate !== 0 && waveformBuffer.sampleRate !== sampleRate
           
-          // 使用函数式更新来获取最新的时间偏移并计算新时间戳
+          // 使用函数式更新
           setWaveformTimeOffset(currentOffset => {
-            // ⚡ 关键修改：总是从0开始，不累积时间偏移（避免时间轴无限增长）
-            const actualOffset = 0
-            
             if (sampleRateChanged && !freqChanged) {
               console.log(`${freq}Hz采样率变化: ${waveformBuffer.sampleRate}Hz → ${sampleRate}Hz`)
             }
             
-            // 计算新数据的时间戳（总是从0开始）
-            const newTimeStamps = newInput.map((_, index) => {
-              return actualOffset + (index / sampleRate) * 1000  // ms
-            })
-          
             // 追加新数据到缓冲区并更新显示
             setWaveformBuffer(prev => {
-              // 频率或采样率变化时清空，同频率只保留最新数据（避免无限累积）
+              // 频率或采样率变化时清空
               const shouldReset = freqChanged || sampleRateChanged
               
-              // ⚡ 关键修改：同频率不累积，直接使用最新数据
-              // 这样实时监视时每次显示的是固定长度的新数据，不会越来越密
+              // 实时流数据：累积数据点
+              // ECG模式(freq=1)保留3秒数据，其他模式保留较少
+              const isEcgMode = freq === 1
+              const maxPoints = isEcgMode ? 3000 : 500  // ECG:3秒@1000Hz, 其他:0.5秒
+              
+              let combinedInput, combinedOutput
+              if (shouldReset || !prev.input || prev.input.length === 0) {
+                combinedInput = newInput
+                combinedOutput = newOutput
+              } else {
+                combinedInput = [...prev.input, ...newInput]
+                combinedOutput = [...prev.output, ...newOutput]
+              }
+              
+              // 保留最新的maxPoints个点
+              const startIdx = combinedInput.length > maxPoints ? combinedInput.length - maxPoints : 0
+              const trimmedInput = combinedInput.slice(startIdx)
+              const trimmedOutput = combinedOutput.slice(startIdx)
+              
+              // 重新计算时间戳（从0开始，连续递增）
+              const newTimeStamps = trimmedInput.map((_, index) => {
+                return (index / sampleRate) * 1000  // ms
+              })
+              
               const newBuffer = {
-                input: newInput,
-                output: newOutput,
+                input: trimmedInput,
+                output: trimmedOutput,
                 timeStamps: newTimeStamps,
                 freq,
                 sampleRate

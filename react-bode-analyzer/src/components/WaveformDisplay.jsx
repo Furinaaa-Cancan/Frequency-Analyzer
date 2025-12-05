@@ -282,8 +282,7 @@ function WaveformDisplay({ waveformData, allWaveforms, signalType = 'sine' }) {
         ticks: { 
           maxTicksLimit: 11,
           font: { size: 10 },
-          stepSize: 1,
-          autoSkip: false
+          autoSkip: true
         }
       },
       y: {
@@ -392,8 +391,7 @@ function WaveformDisplay({ waveformData, allWaveforms, signalType = 'sine' }) {
         ticks: { 
           maxTicksLimit: 11,
           font: { size: 10 },
-          stepSize: 1,
-          autoSkip: false
+          autoSkip: true
         }
       },
       y: {

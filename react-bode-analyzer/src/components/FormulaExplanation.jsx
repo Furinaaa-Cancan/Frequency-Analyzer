@@ -207,7 +207,7 @@ function FormulaExplanation() {
               </div>
               <div className="workflow-item">
                 <span className="step-badge">2</span>
-                <span className="step-text">扫频循环：10Hz → 1000Hz，步进10Hz</span>
+                <span className="step-text">扫频循环：10Hz → 2000Hz，步进10Hz</span>
               </div>
               <div className="workflow-item">
                 <span className="step-badge">3</span>
