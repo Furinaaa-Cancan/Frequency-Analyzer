@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 
 const CONFIG = {
   FREQ_MIN: 10,
@@ -34,6 +34,11 @@ export function useDataPoints() {
     freq: 0,
     sampleRate: 0
   })
+  
+  // 节流相关：减少UI更新频率，防止卡顿
+  const pendingDataRef = useRef({ input: [], output: [] })  // 待处理数据缓冲
+  const lastUpdateTimeRef = useRef(0)  // 上次UI更新时间
+  const updateIntervalMs = 50  // UI更新间隔（50ms = 20fps）
 
   const addDataPoint = useCallback((data, addLog, signalType = 'sine') => {
     // 处理真实欠采样波形：UWAVE:freq,sampleRate
@@ -188,145 +193,86 @@ export function useDataPoints() {
       return
     }
     
-    // 处理波形数据：WAVEFORM:freq,sampleRate,inputData,outputData
+    // 处理波形数据：WAVEFORM:freq,sampleRate,inputData|outputData
+    // 使用节流机制减少UI更新频率，防止卡顿
     if (data.startsWith('WAVEFORM:')) {
       try {
         const parts = data.substring(9).split(',')
         const freq = parseInt(parts[0], 10)
         const sampleRate = parseInt(parts[1], 10)
         
-        // 验证基本参数
-        if (isNaN(freq) || isNaN(sampleRate) || sampleRate <= 0) {
-          addLog('波形数据格式错误：频率或采样率无效', 'warning')
-          return
-        }
+        if (isNaN(freq) || isNaN(sampleRate) || sampleRate <= 0) return
+        
         const dataStart = data.indexOf(',', data.indexOf(',') + 1) + 1
         const dataStr = data.substring(dataStart)
         const splitData = dataStr.split('|')
-        if (splitData.length !== 2) {
-          addLog('波形数据格式错误：缺少输入输出分隔符', 'warning')
-          return
-        }
+        if (splitData.length !== 2) return
         
         const [inputStr, outputStr] = splitData
         const newInput = inputStr.split(',').map(v => parseInt(v, 10)).filter(v => !isNaN(v))
         const newOutput = outputStr.split(',').map(v => parseInt(v, 10)).filter(v => !isNaN(v))
         
         if (newInput.length > 0 && newOutput.length > 0) {
-          const dataLengthMs = (newInput.length / sampleRate) * 1000
+          // 累积数据到待处理缓冲区
+          pendingDataRef.current.input.push(...newInput)
+          pendingDataRef.current.output.push(...newOutput)
+          pendingDataRef.current.freq = freq
+          pendingDataRef.current.sampleRate = sampleRate
           
-          // 检测频率或采样率是否变化
+          // 节流：每50ms才更新一次UI（20fps）
+          const now = Date.now()
+          if (now - lastUpdateTimeRef.current < updateIntervalMs) {
+            return  // 还没到更新时间，继续累积
+          }
+          lastUpdateTimeRef.current = now
+          
+          // 取出并清空待处理数据
+          const pendingInput = [...pendingDataRef.current.input]
+          const pendingOutput = [...pendingDataRef.current.output]
+          pendingDataRef.current.input = []
+          pendingDataRef.current.output = []
+          
+          // 检测变化
           const freqChanged = waveformBuffer.freq !== 0 && waveformBuffer.freq !== freq
           const sampleRateChanged = waveformBuffer.sampleRate !== 0 && waveformBuffer.sampleRate !== sampleRate
+          const shouldReset = freqChanged || sampleRateChanged
           
-          // 使用函数式更新
-          setWaveformTimeOffset(currentOffset => {
-            if (sampleRateChanged && !freqChanged) {
-              console.log(`${freq}Hz采样率变化: ${waveformBuffer.sampleRate}Hz → ${sampleRate}Hz`)
-            }
+          // 更新缓冲区
+          setWaveformBuffer(prev => {
+            const isEcgMode = freq === 1
+            const maxPoints = isEcgMode ? 3000 : 500
             
-            // 追加新数据到缓冲区并更新显示
-            setWaveformBuffer(prev => {
-              // 频率或采样率变化时清空
-              const shouldReset = freqChanged || sampleRateChanged
-              
-              // 实时流数据：累积数据点
-              // ECG模式(freq=1)保留3秒数据，其他模式保留较少
-              const isEcgMode = freq === 1
-              const maxPoints = isEcgMode ? 3000 : 500  // ECG:3秒@1000Hz, 其他:0.5秒
-              
-              let combinedInput, combinedOutput
-              if (shouldReset || !prev.input || prev.input.length === 0) {
-                combinedInput = newInput
-                combinedOutput = newOutput
-              } else {
-                combinedInput = [...prev.input, ...newInput]
-                combinedOutput = [...prev.output, ...newOutput]
-              }
-              
-              // 保留最新的maxPoints个点
-              const startIdx = combinedInput.length > maxPoints ? combinedInput.length - maxPoints : 0
-              const trimmedInput = combinedInput.slice(startIdx)
-              const trimmedOutput = combinedOutput.slice(startIdx)
-              
-              // 重新计算时间戳（从0开始，连续递增）
-              const newTimeStamps = trimmedInput.map((_, index) => {
-                return (index / sampleRate) * 1000  // ms
-              })
-              
-              const newBuffer = {
-                input: trimmedInput,
-                output: trimmedOutput,
-                timeStamps: newTimeStamps,
-                freq,
-                sampleRate
-              }
-              
-              // 更新实时显示数据
-              setWaveformData({
-                input: newBuffer.input,
-                output: newBuffer.output,
-                timeStamps: newBuffer.timeStamps,
-                freq: newBuffer.freq,
-                sampleRate: newBuffer.sampleRate
-              })
-              
-              // 保存到allWaveforms（按频率独立保存）
-              setAllWaveforms(prev => {
-                const newMap = new Map(prev)
-                const existingData = newMap.get(freq)
-                
-                // 检查采样率是否变化
-                const sampleRateChanged = existingData && existingData.sampleRate !== sampleRate
-                
-                if (existingData && !sampleRateChanged) {
-                  // 采样率未变，累加同一频率的数据
-                  const maxPoints = 1024
-                  const combinedInput = [...existingData.input, ...newInput]
-                  const combinedOutput = [...existingData.output, ...newOutput]
-                  const combinedTimeStamps = [...existingData.timeStamps, ...newTimeStamps]
-                  
-                  const startIdx = combinedInput.length > maxPoints ? combinedInput.length - maxPoints : 0
-                  
-                  newMap.set(freq, {
-                    input: combinedInput.slice(startIdx),
-                    output: combinedOutput.slice(startIdx),
-                    timeStamps: combinedTimeStamps.slice(startIdx),
-                    freq,
-                    sampleRate
-                  })
-                } else {
-                  // 首次保存该频率 或 采样率变化时重置数据
-                  if (sampleRateChanged) {
-                    console.log(`${freq}Hz采样率变化: ${existingData.sampleRate}Hz → ${sampleRate}Hz，清空旧数据`)
-                  }
-                  newMap.set(freq, {
-                    input: newInput,
-                    output: newOutput,
-                    timeStamps: newTimeStamps,
-                    freq,
-                    sampleRate
-                  })
-                }
-                return newMap
-              })
-              
-              return newBuffer
-            })
-            
-            if (signalType !== 'ecg') {
-              addLog(`波形数据: ${freq}Hz, ${newInput.length}点 (时长${dataLengthMs.toFixed(1)}ms)`, 'success')
+            let combinedInput, combinedOutput
+            if (shouldReset || !prev.input || prev.input.length === 0) {
+              combinedInput = pendingInput
+              combinedOutput = pendingOutput
             } else {
-              // ECG模式日志减少频率
-              // addLog(`ECG数据: ${newInput.length}点`, 'info')
+              combinedInput = [...prev.input, ...pendingInput]
+              combinedOutput = [...prev.output, ...pendingOutput]
             }
             
-            // 返回更新后的时间偏移（总是返回0，下次从0开始）
-            return 0
+            const startIdx = combinedInput.length > maxPoints ? combinedInput.length - maxPoints : 0
+            const trimmedInput = combinedInput.slice(startIdx)
+            const trimmedOutput = combinedOutput.slice(startIdx)
+            
+            const newTimeStamps = trimmedInput.map((_, i) => (i / sampleRate) * 1000)
+            
+            const newBuffer = {
+              input: trimmedInput,
+              output: trimmedOutput,
+              timeStamps: newTimeStamps,
+              freq,
+              sampleRate
+            }
+            
+            // 更新显示数据
+            setWaveformData(newBuffer)
+            
+            return newBuffer
           })
         }
       } catch (e) {
-        console.error('波形数据解析错误:', e)
+        console.error('WAVEFORM解析错误:', e)
       }
       return
     }
