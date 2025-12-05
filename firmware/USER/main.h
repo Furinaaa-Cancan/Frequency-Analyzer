@@ -10,8 +10,8 @@ typedef enum {
     SIGNAL_TYPE_ECG = 1
 } SignalType_t;
 
-/* 全局信号类型变量 */
-extern SignalType_t g_signal_type;
+/* 全局信号类型变量 (volatile: 在中断中使用) */
+extern volatile SignalType_t g_signal_type;
 
 void delay_ms(uint32_t ms);
 void delay_us(uint16_t us);

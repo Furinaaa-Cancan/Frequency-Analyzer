@@ -43,8 +43,8 @@ extern uint32_t adc_buffer[ADC_BUFFER_SIZE];
 /* 外部校准数据（在measurement.c中定义）*/
 extern CalibrationData_t g_calibration;
 
-/* 全局信号类型变量 (默认正弦波) */
-SignalType_t g_signal_type = SIGNAL_TYPE_SINE;
+/* 全局信号类型变量 (默认正弦波, volatile: 在中断中使用) */
+volatile SignalType_t g_signal_type = SIGNAL_TYPE_SINE;
 
 /* 全局系统滴答计数（用于测量时间，1ms递增） */
 volatile uint32_t systick_ms = 0;

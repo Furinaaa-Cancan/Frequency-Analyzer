@@ -97,14 +97,14 @@ static void process_uart_command(void)
     /* TYPE:SINE - 切换到正弦波模式 */
     else if(str_compare(uart_rx_buffer, "TYPE:SINE", 9) == 0)
     {
-        extern SignalType_t g_signal_type;
+        extern volatile SignalType_t g_signal_type;
         g_signal_type = SIGNAL_TYPE_SINE;
         printf("OK:TYPE:SINE\r\n");
     }
     /* TYPE:ECG - 切换到心电ECG模式并启动 */
     else if(str_compare(uart_rx_buffer, "TYPE:ECG", 8) == 0)
     {
-        extern SignalType_t g_signal_type;
+        extern volatile SignalType_t g_signal_type;
         extern void DDS_Start(void);
         g_signal_type = SIGNAL_TYPE_ECG;
         DDS_Start();  /* 启动DDS输出ECG波形 */
