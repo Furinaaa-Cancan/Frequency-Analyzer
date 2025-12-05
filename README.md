@@ -74,77 +74,26 @@
 
 ## 🏗️ 技术架构
 
-### 系统框图
+### 系统架构
 
-```mermaid
-flowchart TB
-    subgraph MCU["GD32F103RCT6 @ 72MHz"]
-        subgraph GEN["信号生成子系统"]
-            DDS["DDS<br/>50kHz TIMER2"]
-            SPI["SPI0<br/>PA5/PA7/PA4"]
-            DAC["DAC5311<br/>8-bit"]
-            AMP["三级运放<br/>滤波网络"]
-            DDS --> SPI --> DAC --> AMP
-        end
-        
-        subgraph ACQ["信号采集子系统"]
-            TIM3["TIMER3<br/>可变采样率"]
-            ADC["ADC0+ADC1<br/>双通道并行"]
-            DMA["DMA0<br/>512点循环"]
-            DSP["数据处理<br/>DFT/RMS"]
-            TIM3 --> ADC --> DMA --> DSP
-        end
-        
-        subgraph COM["通信子系统"]
-            UART["USART0<br/>PA9/PA10"]
-            PARSE["命令解析<br/>协议处理"]
-            UART --> PARSE
-        end
-    end
-    
-    subgraph WEB["React Web Application"]
-        BODE["Bode图"]
-        WAVE["波形显示"]
-        TERM["串口终端"]
-    end
-    
-    AMP -->|PB1 输出| ADC
-    AMP -->|PA6 输入| ADC
-    PARSE -->|USB-UART| WEB
-    DSP --> PARSE
-```
+系统由三个子系统组成：
 
-### 信号流详解
+**1. 信号生成子系统**
+> DDS算法(TIMER2 50kHz) → SPI0(PA5/PA7/PA4) → DAC5311(8-bit) → 三级运放滤波网络
 
-#### 正弦波模式（Bode图测量）
+**2. 信号采集子系统**
+> TIMER3触发 → ADC0+ADC1双通道并行采样 → DMA循环传输(512点) → DFT/RMS数据处理
 
-```mermaid
-flowchart LR
-    A["DDS相位累加器<br/>50kHz"] --> B["256点正弦表"]
-    B --> C["DAC5311"]
-    C --> D["运放滤波"]
-    D --> E["被测电路 DUT"]
-    E --> F["PA6 输入参考 K"]
-    E --> G["PB1 输出测量 K₁"]
-    F --> H["ADC双通道<br/>同步采样"]
-    G --> H
-    H --> I["DMA传输"]
-    I --> J["DFT提取"]
-    J --> K["H(ω)=K₁/K, θ(ω)"]
-```
+**3. 通信子系统**
+> USART0(PA9/PA10, 115200bps) → 命令解析 → USB-UART → React Web界面
 
-#### ECG模式（心电信号）
+### 信号流
 
-```mermaid
-flowchart LR
-    A["MIT-BIH波形表<br/>360点"] --> B["相位累加器<br/>50Hz"]
-    B --> C["DAC5311"]
-    C --> D["运放链路"]
-    D --> E["PA6采集<br/>2500Hz"]
-    E --> F["DMA缓冲"]
-    F --> G["WAVEFORM数据流"]
-    G --> H["前端显示"]
-```
+**正弦波模式（Bode图测量）**：
+> DDS相位累加器 → 256点正弦表 → DAC5311 → 运放滤波 → **被测电路(DUT)** → PA6(输入K) / PB1(输出K₁) → ADC同步采样 → DMA → DFT提取 → **H(ω)=K₁/K, θ(ω)**
+
+**ECG模式（心电信号）**：
+> MIT-BIH波形表(360点) → 相位累加器(50Hz) → DAC5311 → 运放链路 → PA6采集(2500Hz) → DMA缓冲 → WAVEFORM数据流 → **前端显示**
 
 ---
 
@@ -152,21 +101,17 @@ flowchart LR
 
 ### 模拟前端电路
 
-```mermaid
-flowchart LR
-    DAC["DAC5311<br/>VOUT"] --> U1A["U1A<br/>缓冲器"]
-    U1A -->|C1 1.5μF| U1B["U1B<br/>放大器"]
-    U1B -->|C2 1.5μF| U1C["U1C<br/>输出级"]
-    U1A --> PA6["PA6<br/>输入参考K"]
-    U1C --> PB1["PB1<br/>输出测量K₁"]
-```
+**信号链路**：
+> DAC5311(VOUT) → U1A(缓冲器) → C1(1.5μF) → U1B(放大器) → C2(1.5μF) → U1C(输出级)
+
+**采集点**：
+- **PA6**：U1A输出端，采集输入参考信号 K
+- **PB1**：U1C输出端，采集输出测量信号 K₁
 
 **滤波器特性**：
-| 参数 | 值 | 说明 |
-|------|-----|------|
-| 耦合电容 | C1/C2 = 1.5μF | 构成高通滤波器 |
-| 截止频率 | fc ≈ 1/(2πRC) | 取决于电阻值 |
-| 适用范围 | 50Hz - 1kHz | 正弦波测试频段 |
+- 耦合电容 C1/C2 = 1.5μF，构成高通滤波器
+- 截止频率 fc ≈ 1/(2πRC)
+- 适用频率范围：50Hz - 1kHz
 
 ### 引脚分配表
 
