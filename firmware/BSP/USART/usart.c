@@ -106,8 +106,14 @@ static void process_uart_command(void)
     {
         extern volatile SignalType_t g_signal_type;
         extern void DDS_Start(void);
+        extern void TIMER3_SetSampleRate(uint32_t sample_rate_hz);
+        
         g_signal_type = SIGNAL_TYPE_ECG;
         DDS_Start();  /* 启动DDS输出ECG波形 */
+        
+        /* 设置ADC采样率：2500Hz (50Hz ECG × 50倍过采样) */
+        TIMER3_SetSampleRate(2500);
+        
         uart_stream_enable = 1;  /* 启用数据流 */
         uart_timestamp = 0;
         printf("OK:TYPE:ECG\r\n");
@@ -465,21 +471,11 @@ void UART_SendStreamData(uint8_t sample, uint16_t adc0, uint16_t adc1)
     }
     
     /* 发送符合网页端 WAVEFORM 格式的数据: WAVEFORM:freq,sampleRate,input|output */
-    /* ECG模式1000Hz，正弦波500Hz (由 timer.c 中的 stream_divisor 控制) */
-    uint16_t sample_rate = (g_signal_type == SIGNAL_TYPE_ECG) ? 1000 : 500;
+    /* ECG模式2500Hz，正弦波500Hz (由 timer.c 中的 stream_divisor 控制) */
+    uint16_t sample_rate = (g_signal_type == SIGNAL_TYPE_ECG) ? 2500 : 500;
     
-    /* ECG模式：直接发送DAC值（滤波器会滤掉非正弦波信号）*/
-    /* 正弦波模式：发送ADC采集值 */
-    if(g_signal_type == SIGNAL_TYPE_ECG)
-    {
-        /* 将8位DAC值(0-255)映射到12位范围(0-4095) */
-        uint16_t ecg_val = ((uint16_t)sample) << 4;
-        printf("WAVEFORM:%u,%u,%u|%u\r\n", (unsigned int)freq, sample_rate, ecg_val, ecg_val);
-    }
-    else
-    {
-        printf("WAVEFORM:%u,%u,%u|%u\r\n", (unsigned int)freq, sample_rate, adc0, adc1);
-    }
+    /* 测试：ECG 200Hz，发送真实ADC值看能否通过高通滤波器 */
+    printf("WAVEFORM:%u,%u,%u|%u\r\n", (unsigned int)freq, sample_rate, adc0, adc1);
 }
 
 void USART0_IRQHandler(void)

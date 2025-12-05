@@ -103,13 +103,11 @@ void TIMER2_IRQHandler(void)
         if(g_signal_type == SIGNAL_TYPE_ECG)
         {
             /* ECG模式：使用和正弦波一样的DDS逻辑
-             * 360点波形表，使用相位累加器控制频率
-             * ECG频率设为100Hz（和正弦波默认频率一样）
-             * phase_increment = freq * 85899 (和DDS一样的计算)
-             * 但ECG表只有360点，需要映射：index = (phase >> 24) * 360 / 256
+             * ECG频率100Hz（和正弦波一样），能通过滤波器
+             * 数据流5000Hz，每个心跳50个数据点
              */
             static uint32_t ecg_phase_accumulator = 0;
-            uint32_t ecg_phase_increment = 100 * 85899UL;  /* 100Hz */
+            uint32_t ecg_phase_increment = 50 * 85899UL;  /* 50Hz - 每个心跳20ms，更平滑 */
             
             /* 从相位累加器计算ECG表索引 */
             uint32_t phase_index = (ecg_phase_accumulator >> 24) & 0xFF;  /* 0-255 */
@@ -144,11 +142,11 @@ void TIMER2_IRQHandler(void)
             
             if(g_signal_type == SIGNAL_TYPE_ECG || freq == 0)
             {
-                /* ECG模式或0Hz：高密度数据流
-                 * 50kHz / 50 = 1000Hz 数据流率 (每1ms一个点)
-                 * 医疗级采样密度，确保波形平滑
+                /* ECG模式：高密度数据流
+                 * 50kHz / 20 = 2500Hz 数据流率
+                 * ECG频率50Hz，每个心跳50个数据点
                  */
-                stream_divisor = 50;
+                stream_divisor = 20;
             }
             else
             {
@@ -159,8 +157,12 @@ void TIMER2_IRQHandler(void)
             
             /* 读取最新的ADC数据（双通道）*/
             /* DMA格式：低16位ADC0(PA6)，高16位ADC1(PB1) */
+            /* 使用递增索引读取不同位置，避免重复读取同一个值 */
             extern uint32_t adc_buffer[];
-            uint32_t adc_val = adc_buffer[0];
+            static uint16_t adc_read_index = 0;
+            uint32_t adc_val = adc_buffer[adc_read_index];
+            adc_read_index++;
+            if(adc_read_index >= 512) adc_read_index = 0;  /* 循环 */
             uint16_t adc0 = adc_val & 0xFFFF;
             uint16_t adc1 = (adc_val >> 16) & 0xFFFF;
             
