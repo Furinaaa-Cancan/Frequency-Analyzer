@@ -16,10 +16,13 @@ import WaveformDisplay from './components/WaveformDisplay'
 import WaveformCapture from './components/WaveformCapture'
 import LiveSineWaveMonitor from './components/LiveSineWaveMonitor'
 import DataVerification from './components/DataVerification'
+import ErrorDialog from './components/ErrorDialog'
+import ProtocolTester from './components/ProtocolTester'
 import Footer from './components/Footer'
 import { useSerialPort } from './hooks/useSerialPort'
 import { useDataPoints } from './hooks/useDataPoints'
 import { useLogs } from './hooks/useLogs'
+import { useProtocolValidation } from './hooks/useProtocolValidation'
 import './App.css'
 
 function App() {
@@ -41,6 +44,16 @@ function App() {
   } = useDataPoints()
   
   const { logs, addLog } = useLogs()
+  
+  const {
+    errors: protocolErrors,
+    showErrorDialog,
+    setShowErrorDialog,
+    addError,
+    clearErrors,
+    validateData,
+    errorCount
+  } = useProtocolValidation()
   
   const [toast, setToast] = useState({ show: false, message: '' })
   const [banner, setBanner] = useState({ show: false, message: '' })
@@ -107,6 +120,11 @@ function App() {
 
   const handleConnect = async () => {
     const success = await connect(addLog, (data) => {
+      // 协议校验
+      const validation = validateData(data)
+      if (!validation.valid && validation.error) {
+        // 错误已在validateData中记录，这里不重复处理
+      }
       // 处理接收到的数据，传入当前的信号类型
       addDataPoint(data, addLog, signalTypeRef.current)
     })
@@ -234,6 +252,18 @@ function App() {
     addLog('Bode图已导出为PNG图片', 'success')
   }
 
+  // 协议校验测试功能
+  const handleProtocolValidate = (data) => {
+    const result = validateData(data)
+    if (!result.valid && result.error) {
+      // 校验失败，错误已记录到protocolErrors
+      addLog(`协议校验失败: ${result.message || result.error}`, 'warning')
+    } else if (result.valid) {
+      addLog(`协议校验通过: ${data.substring(0, 30)}...`, 'success')
+    }
+    return result
+  }
+
   // 串口数据处理已经在handleConnect中通过回调实现
 
   return (
@@ -278,6 +308,8 @@ function App() {
           dataCount={dataPoints.length}
           currentFreq={dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].freq : null}
           dataRate={dataRate}
+          errorCount={errorCount}
+          onShowErrors={() => setShowErrorDialog(true)}
         />
         
         <WaveformDisplay waveformData={waveformData} allWaveforms={allWaveforms} signalType={signalType} />
@@ -298,6 +330,8 @@ function App() {
         
         <DataTable dataPoints={dataPoints} />
         
+        <ProtocolTester onValidate={handleProtocolValidate} />
+        
         <DataVerification 
           isConnected={isConnected}
           dataPoints={dataPoints}
@@ -308,6 +342,13 @@ function App() {
       </div>
       
       <Footer />
+      
+      {/* 协议错误对话框 */}
+      <ErrorDialog
+        errors={protocolErrors}
+        onClose={() => setShowErrorDialog(false)}
+        onClearAll={clearErrors}
+      />
     </div>
   )
 }

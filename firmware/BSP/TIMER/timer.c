@@ -237,13 +237,46 @@ void TIMER3_ADC_Init(uint32_t sample_rate_hz)
  */
 void TIMER3_SetSampleRate(uint32_t sample_rate_hz)
 {
-    /* 计算新的周期值 */
-    uint32_t period = (72000000 / sample_rate_hz) - 1;
+    /* ⭐ TIMER3是16位定时器，ARR最大65535
+     * 当采样率<1099Hz时，需要使用预分频器
+     * 计算公式：period = 72MHz / (prescaler+1) / sample_rate - 1
+     */
+    uint32_t prescaler = 0;
+    uint32_t period;
+    uint32_t timer_clock = 72000000;
+    
+    /* 计算所需的period值 */
+    period = (timer_clock / sample_rate_hz) - 1;
+    
+    /* 如果period超过16位最大值，使用预分频器 */
+    while(period > 65535 && prescaler < 65535)
+    {
+        prescaler++;
+        period = (timer_clock / (prescaler + 1) / sample_rate_hz) - 1;
+    }
+    
+    /* 确保period在有效范围内 */
+    if(period > 65535) period = 65535;
+    
+    /* ⭐ 先禁用定时器，避免在修改过程中触发 */
+    timer_disable(TIMER3);
+    
+    /* 更新预分频器 */
+    timer_prescaler_config(TIMER3, prescaler, TIMER_PSC_RELOAD_NOW);
     
     /* 更新定时器周期 */
     timer_autoreload_value_config(TIMER3, period);
     
     /* 同时更新CH3比较值 */
     timer_channel_output_pulse_value_config(TIMER3, TIMER_CH_3, period / 2);
+    
+    /* ⭐ 重置计数器为0，确保新周期立即生效 */
+    timer_counter_value_config(TIMER3, 0);
+    
+    /* ⭐ 生成更新事件，将新的ARR值加载到影子寄存器 */
+    timer_event_software_generate(TIMER3, TIMER_EVENT_SRC_UPG);
+    
+    /* 重新使能定时器 */
+    timer_enable(TIMER3);
 }
 

@@ -1,14 +1,24 @@
 import '../styles/StatusBar.css'
 import CountUp from './CountUp'
 
-function StatusBar({ isConnected, dataCount, currentFreq, dataRate, enableProcessing, onToggleProcessing }) {
+function StatusBar({ isConnected, dataCount, currentFreq, dataRate, enableProcessing, onToggleProcessing, errorCount = 0, onShowErrors }) {
   return (
     <div className="status-bar-container">
       <div className="status-bar-header">
         <h3>系统状态</h3>
-        <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-          <div className="status-icon"></div>
-          <span className="status-label">{isConnected ? '设备在线' : '设备离线'}</span>
+        <div className="status-header-right">
+          {/* 错误指示器 */}
+          {errorCount > 0 && (
+            <div className="error-indicator" onClick={onShowErrors} title="点击查看错误详情">
+              <span className="error-indicator-icon">⚠️</span>
+              <span className="error-indicator-count">{errorCount}</span>
+              <span className="error-indicator-label">个错误</span>
+            </div>
+          )}
+          <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+            <div className="status-icon"></div>
+            <span className="status-label">{isConnected ? '设备在线' : '设备离线'}</span>
+          </div>
         </div>
       </div>
       <div className="status-bar">

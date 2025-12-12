@@ -180,6 +180,18 @@ button:active {
   border-color: rgba(200, 80, 60, 0.4);
 }
 
+.btn-warning {
+  background: rgba(255, 152, 0, 0.15);
+  color: #e65100;
+  border-color: rgba(255, 152, 0, 0.4);
+}
+
+.btn-warning:hover {
+  background: rgba(255, 152, 0, 0.25);
+  border-color: rgba(255, 152, 0, 0.6);
+  transform: scale(1.02);
+}
+
 .btn-secondary {
   background: #edf0e8;
   color: #4a3f35;

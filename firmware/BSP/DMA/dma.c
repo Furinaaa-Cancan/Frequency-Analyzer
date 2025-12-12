@@ -128,14 +128,20 @@ void ADC_DMA_Restart(uint32_t sample_count)
     /* 禁用DMA通道 */
     dma_channel_disable(DMA0, DMA_CH0);
     
-    /* 清除传输完成标志 */
+    /* 清除所有DMA标志 */
+    dma_flag_clear(DMA0, DMA_CH0, DMA_FLAG_G);
     dma_flag_clear(DMA0, DMA_CH0, DMA_FLAG_FTF);
+    dma_flag_clear(DMA0, DMA_CH0, DMA_FLAG_HTF);
+    dma_flag_clear(DMA0, DMA_CH0, DMA_FLAG_ERR);
     
     /* 重新设置传输数量 */
     if(sample_count > ADC_BUFFER_SIZE) {
         sample_count = ADC_BUFFER_SIZE;
     }
     dma_transfer_number_config(DMA0, DMA_CH0, sample_count);
+    
+    /* ⭐ 重置内存地址到缓冲区起始位置 */
+    dma_memory_address_config(DMA0, DMA_CH0, (uint32_t)adc_buffer);
     
     /* 重新使能DMA通道 */
     dma_channel_enable(DMA0, DMA_CH0);

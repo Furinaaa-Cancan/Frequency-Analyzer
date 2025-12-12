@@ -257,6 +257,7 @@ static void process_uart_command(void)
         extern void DDS_SetFrequency(uint32_t freq_hz);
         extern void DDS_Start(void);
         extern void TIMER3_SetSampleRate(uint32_t sample_rate_hz);
+        extern void ADC_DMA_Restart(uint32_t sample_count);
         extern uint32_t adc_buffer[];
         
         char *ptr = uart_rx_buffer + 6;
@@ -270,31 +271,54 @@ static void process_uart_command(void)
             DDS_SetFrequency(signal_freq);
             DDS_Start();
             
-            /* 真实设置欠采样率！ */
+            /* 设置欠采样率 */
             TIMER3_SetSampleRate(sample_rate);
             
-            /* 等待信号稳定 + DMA缓冲区刷新（只需要前128点） */
-            uint32_t buffer_fill_ms = (128 * 1000) / sample_rate;  /* 128点足够 */
-            uint32_t settle_time_ms = 30;  /* 信号稳定时间 */
-            uint32_t total_wait = buffer_fill_ms + settle_time_ms;
-            if(total_wait < 50) total_wait = 50;
-            if(total_wait > 500) total_wait = 500;  /* 最长500ms */
-            delay_ms(total_wait);
+            /* 调试：计算实际的prescaler和period值 */
+            uint32_t psc = 0, prd = (72000000 / sample_rate) - 1;
+            while(prd > 65535 && psc < 65535) { psc++; prd = (72000000 / (psc + 1) / sample_rate) - 1; }
+            uint32_t actual_sr = 72000000 / (psc + 1) / (prd + 1);
+            printf("[DBG] freq=%u, sr=%u, psc=%u, prd=%u, actual_sr=%u\r\n", 
+                   (unsigned int)signal_freq, (unsigned int)sample_rate, 
+                   (unsigned int)psc, (unsigned int)prd, (unsigned int)actual_sr);
+            
+            /* 等待信号稳定 */
+            delay_ms(30);
+            
+            /* ⭐ 重启DMA，确保从缓冲区开头采集连续的64个新点 */
+            ADC_DMA_Restart(64);
+            
+            /* 等待64个采样点完成 */
+            uint32_t buffer_fill_ms = (64 * 1000) / sample_rate + 5;  /* 64点采集时间+小余量 */
+            if(buffer_fill_ms > 2000) buffer_fill_ms = 2000;  /* 最长2s */
+            delay_ms(buffer_fill_ms);
+            
+            /* 立即禁用DMA，防止循环模式覆盖数据 */
+            dma_channel_disable(DMA0, DMA_CH0);
+            
+            /* 复制数据到本地缓冲区 */
+            static uint16_t local_ch0[64];
+            static uint16_t local_ch1[64];
+            for(uint32_t i = 0; i < 64; i++)
+            {
+                uint32_t raw = adc_buffer[i];
+                local_ch0[i] = (uint16_t)(raw & 0xFFFF);
+                local_ch1[i] = (uint16_t)((raw >> 16) & 0xFFFF);
+            }
+            
+            /* 恢复默认采样率和DMA循环模式 */
+            TIMER3_SetSampleRate(10000);
+            ADC_DMA_Restart(512);  /* 恢复512点循环采集 */
             
             /* 发送64点真实欠采样数据（双通道：PA6和PB1） */
             printf("UWAVE:%u,%u\r\n", (unsigned int)signal_freq, (unsigned int)sample_rate);
             printf("D:");
             for(uint32_t i = 0; i < 64; i++)
             {
-                uint16_t ch0 = (uint16_t)(adc_buffer[i] & 0xFFFF);         /* PA6 */
-                uint16_t ch1 = (uint16_t)((adc_buffer[i] >> 16) & 0xFFFF); /* PB1 */
-                printf("%u,%u", ch0, ch1);
+                printf("%u,%u", local_ch0[i], local_ch1[i]);
                 if(i < 63) printf(";");
             }
             printf("\r\n");
-            
-            /* 恢复默认采样率 */
-            TIMER3_SetSampleRate(10000);
         }
     }
     /* SWEEP - 自动扫频测量 */
