@@ -48,55 +48,62 @@ export function useProtocolValidation() {
   }, [])
 
   // 校验FREQ_RESP数据
-  const validateFreqResp = useCallback((data) => {
-    // 格式: FREQ_RESP:freq,H,theta 或 FREQ_RESP:freq,H,theta,checksum
+  // 格式: FREQ_RESP:freq,K,K1,H,theta (5个参数，无校验和)
+  const validateFreqResp = useCallback((data, strictMode = false) => {
     if (!data.startsWith('FREQ_RESP:')) {
-      return { valid: false, error: 'format', message: '不是FREQ_RESP格式' }
+      if (strictMode) {
+        return { valid: false, error: 'format', message: '不是FREQ_RESP格式' }
+      }
+      return { valid: true }
     }
     
     const content = data.substring(10)
     const parts = content.split(',')
     
+    // 实际格式: freq,K,K1,H,theta (5个参数)
     if (parts.length < 3) {
-      addError('format', `FREQ_RESP格式错误：需要至少3个参数，收到${parts.length}个`, data)
+      if (strictMode) {
+        addError('format', `FREQ_RESP格式错误：需要至少3个参数，收到${parts.length}个`, data)
+      }
       return { valid: false, error: 'format', message: '参数不足' }
     }
     
     const freq = parseFloat(parts[0])
-    const H = parseFloat(parts[1])
-    const theta = parseFloat(parts[2])
-    const checksum = parts.length > 3 ? parseInt(parts[3], 16) : null
+    // 根据参数数量判断格式
+    let H, theta
+    if (parts.length >= 5) {
+      // 新格式: freq,K,K1,H,theta
+      H = parseFloat(parts[3])
+      theta = parseFloat(parts[4])
+    } else {
+      // 旧格式: freq,H,theta
+      H = parseFloat(parts[1])
+      theta = parseFloat(parts[2])
+    }
     
     // 检查数值有效性
     if (isNaN(freq) || isNaN(H) || isNaN(theta)) {
-      addError('parse', `FREQ_RESP解析错误：freq=${parts[0]}, H=${parts[1]}, theta=${parts[2]}`, data)
+      if (strictMode) {
+        addError('parse', `FREQ_RESP解析错误：freq=${parts[0]}, H=${H}, theta=${theta}`, data)
+      }
       return { valid: false, error: 'parse', message: '数值解析失败' }
     }
     
-    // 检查频率范围
-    if (freq < 1 || freq > 100000) {
-      addError('range', `频率超出范围: ${freq}Hz (有效范围: 1-100000Hz)`, data)
-      return { valid: false, error: 'range', message: '频率超出范围' }
-    }
-    
-    // 检查幅度范围
-    if (H < 0 || H > 1000) {
-      addError('range', `幅度异常: H=${H} (预期范围: 0-1000)`, data)
-      return { valid: false, error: 'range', message: '幅度异常' }
-    }
-    
-    // 检查相位范围
-    if (theta < -360 || theta > 360) {
-      addError('range', `相位超出范围: ${theta}° (有效范围: -360°~360°)`, data)
-      return { valid: false, error: 'range', message: '相位超出范围' }
-    }
-    
-    // 校验和验证（如果有）
-    if (checksum !== null) {
-      const calcChecksum = calculateChecksum(`${parts[0]},${parts[1]},${parts[2]}`)
-      if (calcChecksum !== checksum) {
-        addError('checksum', `校验和错误: 收到0x${checksum.toString(16).toUpperCase()}, 计算得0x${calcChecksum.toString(16).toUpperCase()}`, data)
-        return { valid: false, error: 'checksum', message: '校验和不匹配' }
+    // 仅在严格模式下检查范围
+    if (strictMode) {
+      if (freq < 1 || freq > 100000) {
+        addError('range', `频率超出范围: ${freq}Hz (有效范围: 1-100000Hz)`, data)
+        return { valid: false, error: 'range', message: '频率超出范围' }
+      }
+      
+      if (H < 0 || H > 1000) {
+        addError('range', `幅度异常: H=${H} (预期范围: 0-1000)`, data)
+        return { valid: false, error: 'range', message: '幅度异常' }
+      }
+      
+      if (theta < -360 || theta > 360) {
+        addError('range', `相位超出范围: ${theta}° (有效范围: -360°~360°)`, data)
+        return { valid: false, error: 'range', message: '相位超出范围' }
       }
     }
     
@@ -179,15 +186,15 @@ export function useProtocolValidation() {
     return { valid: true, pointCount: pairs.length }
   }, [addError])
 
-  // 通用数据校验入口
-  const validateData = useCallback((data) => {
+  // 通用数据校验入口（仅用于手动测试，不自动校验串口数据）
+  const validateData = useCallback((data, strictMode = true) => {
     if (!data || typeof data !== 'string') {
       return { valid: false, error: 'format', message: '无效数据' }
     }
     
     // 根据数据类型选择校验方法
     if (data.startsWith('FREQ_RESP:')) {
-      return validateFreqResp(data)
+      return validateFreqResp(data, strictMode)
     }
     if (data.includes('UWAVE:')) {
       return validateUWave(data)

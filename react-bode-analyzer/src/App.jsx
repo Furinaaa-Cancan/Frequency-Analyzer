@@ -120,12 +120,8 @@ function App() {
 
   const handleConnect = async () => {
     const success = await connect(addLog, (data) => {
-      // 协议校验
-      const validation = validateData(data)
-      if (!validation.valid && validation.error) {
-        // 错误已在validateData中记录，这里不重复处理
-      }
       // 处理接收到的数据，传入当前的信号类型
+      // 注：协议校验仅在ProtocolTester组件中手动测试时使用
       addDataPoint(data, addLog, signalTypeRef.current)
     })
     if (success) {
